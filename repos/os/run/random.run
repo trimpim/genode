@@ -1,0 +1,51 @@
+#
+# Build
+#
+
+build {
+	core
+	init
+	server/random_pseudo
+	test/random_test
+}
+
+create_boot_directory
+
+#
+# Generate config
+#
+
+install_config {
+<config>
+	<parent-provides>
+		<service name="LOG"/>
+		<service name="ROM"/>
+	</parent-provides>
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+	<start name="random_pseudo">
+		<resource name="RAM" quantum="4M"/>
+		<provides> <service name="Terminal"/> </provides>
+		<config>
+			<seed value="1234"/>
+		</config>
+	</start>
+	<start name="random_test">
+		<resource name="RAM" quantum="4M"/>
+	</start>
+</config>}
+
+#
+# Boot image
+#
+build_boot_image {
+	core
+	init
+	random_pseudo
+	random_test
+}
+
+append qemu_args " -nographic "
+
+run_genode_until "random test completed.*\n" 10

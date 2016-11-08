@@ -1,0 +1,5 @@
+The 'random_pseude' server  provides acces to pseude random numbers created
+by the xoroshiro algorythm.
+
+In the configuration a initial seed can be provided. If no seed is provided,
+the seed 42 is used!
