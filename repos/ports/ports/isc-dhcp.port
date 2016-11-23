@@ -1,0 +1,7 @@
+LICENSE   := GPLv2
+VERSION   := 4.3.5
+DOWNLOADS := isc-dhcp.git
+
+URL(isc-dhcp) := https://source.isc.org/git/dhcp.git
+DIR(isc-dhcp) := src/app/isc-dhcp
+REV(isc-dhcp) := 846d0ecce7480257723c86c59f653687217181bc
