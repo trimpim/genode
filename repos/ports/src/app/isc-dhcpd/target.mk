@@ -11,4 +11,4 @@ INC_DIR += $(ISC_DHCP_DIR)/includes
 INC_DIR += $(ISC_DHCP_DIR)/includes/omapip
 INC_DIR += $(ISC_DHCP_DIR)/bind/include
 
-LIBS += libc libm
+LIBS += libc libm bind9 isc

@@ -1,7 +1,0 @@
-LICENSE   := GPLv2
-VERSION   := 4.3.5
-DOWNLOADS := isc-dhcp.git
-
-URL(isc-dhcp) := https://source.isc.org/git/bind9.git
-DIR(isc-dhcp) := src/app/bind
-REV(isc-dhcp) := 1477c19dd9a347ee19a42dac227f299a4680506f

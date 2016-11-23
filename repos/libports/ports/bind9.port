@@ -1,0 +1,7 @@
+LICENSE   := GPLv2
+VERSION   := 9.11
+DOWNLOADS := bind9.git
+
+URL(bind9) := https://source.isc.org/git/bind9.git
+DIR(bind9) := src/lib/bind9
+REV(bind9) := 1477c19dd9a347ee19a42dac227f299a4680506f
