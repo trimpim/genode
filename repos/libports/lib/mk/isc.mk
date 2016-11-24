@@ -18,4 +18,4 @@ INC_DIR += $(BIND9_DIR)/lib/isc/noatomic/include
 
 CC_C_OPT = -w -std=gnu99
 
-LIBS += libc libm zlib
+LIBS += libc libc-net libc-inet lxip zlib

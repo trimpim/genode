@@ -1,0 +1,84 @@
+From f65c82de7f9005776fb27c34c3944aa6ed0aa135 Mon Sep 17 00:00:00 2001
+From: Pirmin Duss <pirmin@trimpim.ch>
+Date: Thu, 24 Nov 2016 07:16:43 +0100
+Subject: [PATCH] isc: patch to build on Genode
+
+---
+ lib/isc/unix/ifiter_getifaddrs.c | 9 +++++++++
+ lib/isc/unix/ifiter_ioctl.c      | 9 +++++++++
+ lib/isc/unix/ifiter_sysctl.c     | 9 +++++++++
+ 3 files changed, 27 insertions(+)
+
+diff --git a/lib/isc/unix/ifiter_getifaddrs.c b/lib/isc/unix/ifiter_getifaddrs.c
+index 7bfdaa5..3a83c4e 100644
+--- a/lib/isc/unix/ifiter_getifaddrs.c
++++ b/lib/isc/unix/ifiter_getifaddrs.c
+@@ -13,7 +13,16 @@
+  * Obtain the list of network interfaces using the getifaddrs(3) library.
+  */
+ 
++#include <types.h>
++
++#include <isc/lib.h>
++#include <isc/result.h>
++#include <isc/strerror.h>
++#include <isc/interfaceiter.h>
++#include <isc/msgs.h>
++
+ #include <ifaddrs.h>
++#include <errno.h>
+ 
+ /*% Iterator Magic */
+ #define IFITER_MAGIC		ISC_MAGIC('I', 'F', 'I', 'G')
+diff --git a/lib/isc/unix/ifiter_ioctl.c b/lib/isc/unix/ifiter_ioctl.c
+index 5b32bcc..0569900 100644
+--- a/lib/isc/unix/ifiter_ioctl.c
++++ b/lib/isc/unix/ifiter_ioctl.c
+@@ -8,8 +8,17 @@
+ 
+ /* $Id: ifiter_ioctl.c,v 1.62 2009/01/18 23:48:14 tbox Exp $ */
+ 
++#include <types.h>
++
++#include <isc/result.h>
++#include <isc/strerror.h>
++#include <isc/msgs.h>
++#include <isc/log.h>
+ #include <isc/print.h>
+ 
++#include <net/if.h>
++#include <sys/socket.h>
++
+ /*! \file
+  * \brief
+  * Obtain the list of network interfaces using the SIOCGLIFCONF ioctl.
+diff --git a/lib/isc/unix/ifiter_sysctl.c b/lib/isc/unix/ifiter_sysctl.c
+index 8365e49..32fefbf 100644
+--- a/lib/isc/unix/ifiter_sysctl.c
++++ b/lib/isc/unix/ifiter_sysctl.c
+@@ -15,13 +15,22 @@
+  * and 19.16.
+  */
+ 
++#include <types.h>
++
++#include <isc/result.h>
++#include <isc/strerror.h>
++#include <isc/interfaceiter.h>
++#include <isc/msgs.h>
+ #include <sys/param.h>
+ #include <sys/sysctl.h>
+ 
+ #include <net/route.h>
+ #include <net/if_dl.h>
++#include <net/if.h>
+ 
+ #include <isc/print.h>
++#include <sys/socket.h>
++#include <errno.h>
+ 
+ /* XXX what about Alpha? */
+ #ifdef sgi
+-- 
+2.10.2
+
