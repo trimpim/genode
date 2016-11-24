@@ -42,7 +42,7 @@
 /* #undef HAVE_SYSCTLBYNAME */
 
 /** define if catgets() is available */
-#define HAVE_CATGETS 1
+/* #undef HAVE_CATGETS */
 
 /** define if getifaddrs() exists */
 /* #undef HAVE_GETIFADDRS */
@@ -60,7 +60,7 @@
 #define HAVE_GETADDRINFO 1
 
 /** define if gai_strerror() exists */
-#define HAVE_GAISTRERROR 1
+/* #undef HAVE_GAISTRERROR */
 
 /** define if arc4random() exists */
 /* #undef HAVE_ARC4RANDOM */
@@ -81,10 +81,10 @@
 #define WANT_IPV6 1
 
 /** define if flockfile() is available */
-#define HAVE_FLOCKFILE 1
+/* #undef HAVE_FLOCKFILE */
 
 /** define if getc_unlocked() is available */
-#define HAVE_GETCUNLOCKED 1
+/* #undefHAVE_GETCUNLOCKED */
 
 /** Shut up warnings about sputaux in stdio.h on BSD/OS pre-4.1 */
 /* #undef SHUTUP_SPUTAUX */
@@ -143,7 +143,7 @@ int sigwait(const unsigned int *set, int *sig);
 /* #undef NEED_PTHREAD_SCOPE_SYSTEM */
 
 /* Define to 1 if you have the uname library function. */
-#define HAVE_UNAME 1
+/* #undef HAVE_UNAME */
 
 /* Define if building universal (internal helper macro) */
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
@@ -325,10 +325,10 @@ int sigwait(const unsigned int *set, int *sig);
 /* #undef HAVE_LINUX_CAPABILITY_H */
 
 /* Define to 1 if you have the <linux/netlink.h> header file. */
-#define HAVE_LINUX_NETLINK_H 1
+/* #undef HAVE_LINUX_NETLINK_H */
 
 /* Define to 1 if you have the <linux/rtnetlink.h> header file. */
-#define HAVE_LINUX_RTNETLINK_H 1
+/* #undef HAVE_LINUX_RTNETLINK_H */
 
 /* Define to 1 if you have the <linux/types.h> header file. */
 /* #undef HAVE_LINUX_TYPES_H */
@@ -391,7 +391,7 @@ int sigwait(const unsigned int *set, int *sig);
 /* #undef HAVE_READLINE_READLINE_H */
 
 /* Define to 1 if you have the <regex.h> header file. */
-#define HAVE_REGEX_H 1
+/* #undef HAVE_REGEX_H */
 
 /* Define to 1 if you have the <sched.h> header file. */
 /* #undef HAVE_SCHED_H */
@@ -400,19 +400,19 @@ int sigwait(const unsigned int *set, int *sig);
 /* #undef HAVE_SCHED_YIELD */
 
 /* Define to 1 if you have the `setegid' function. */
-#define HAVE_SETEGID 1
+/* #undef  HAVE_SETEGID */
 
 /* Define to 1 if you have the `seteuid' function. */
-#define HAVE_SETEUID 1
+/* #undef HAVE_SETEUID */
 
 /* Define to 1 if you have the `setlocale' function. */
-#define HAVE_SETLOCALE 1
+/* #undef HAVE_SETLOCALE */
 
 /* Define to 1 if you have the `setresgid' function. */
-#define HAVE_SETRESGID 1
+/* #undef  HAVE_SETRESGID */
 
 /* Define to 1 if you have the `setresuid' function. */
-#define HAVE_SETRESUID 1
+/* #undef HAVE_SETRESUID */
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
@@ -436,7 +436,7 @@ int sigwait(const unsigned int *set, int *sig);
 /* #undef HAVE_SYS_DYNTUNE_H */
 
 /* Define to 1 if you have the <sys/mman.h> header file. */
-#define HAVE_SYS_MMAN_H 1
+/* #undef  HAVE_SYS_MMAN_H */
 
 /* Define to 1 if you have the <sys/param.h> header file. */
 #define HAVE_SYS_PARAM_H 1
@@ -466,7 +466,7 @@ int sigwait(const unsigned int *set, int *sig);
 #define HAVE_SYS_TYPES_H 1
 
 /* Define to 1 if you have the <sys/un.h> header file. */
-#define HAVE_SYS_UN_H 1
+/* #undef  HAVE_SYS_UN_H */
 
 /* Define if running under Compaq TruCluster */
 /* #undef HAVE_TRUCLUSTER */
@@ -502,7 +502,7 @@ int sigwait(const unsigned int *set, int *sig);
 #define IRS_GETNAMEINFO_SOCKLEN_T socklen_t
 
 /* Define to allow building of objects for dlopen(). */
-#define ISC_DLZ_DLOPEN 1
+/* #undef  ISC_DLZ_DLOPEN */
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */

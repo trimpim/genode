@@ -102,7 +102,7 @@
 /*! \brief
  * Define if the system has struct if_laddrreq.
  */
-#undef ISC_PLATFORM_HAVEIF_LADDRREQ
+#define ISC_PLATFORM_HAVEIF_LADDRREQ 1
 
 /*! \brief
  * Define either ISC_PLATFORM_BSD44MSGHDR or ISC_PLATFORM_BSD43MSGHDR.
@@ -128,7 +128,7 @@
 /*! \brief
  * Define if the system has TCP_FASTOPEN socket option.
  */
-#define ISC_PLATFORM_HAVETFO 1
+#undef ISC_PLATFORM_HAVETFO
 
 /*! \brief
  * Define if the system supports kqueue multiplexing
@@ -138,7 +138,7 @@
 /*! \brief
  * Define if the system supports epoll multiplexing
  */
-#define ISC_PLATFORM_HAVEEPOLL 1
+#undef ISC_PLATFORM_HAVEEPOLL
 
 /*! \brief
  * Define if the system supports /dev/poll multiplexing
@@ -248,7 +248,7 @@
 /*
  * Define if the system has nanosecond-level accuracy in file stats.
  */
-/* #undef ISC_PLATFORM_HAVESTATNSEC */
+#undef ISC_PLATFORM_HAVESTATNSEC
 
 /*
  * Type used for resource limits.
@@ -274,7 +274,7 @@
 /*
  * Define if the platform has <sys/un.h>.
  */
-#define ISC_PLATFORM_HAVESYSUNH 1
+#undef ISC_PLATFORM_HAVESYSUNH
 
 /*
  * If the "xadd" operation is available on this architecture,
