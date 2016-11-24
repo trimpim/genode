@@ -8,7 +8,7 @@ SRC_C += $(filter-out $(FILTER_OUT),$(notdir $(wildcard $(BIND9_DIR)/lib/dns/*.c
 
 vpath %.c $(BIND9_DIR)/lib/dns
 
-INC_DIR += $(REP_DIR)/src/lib/bind9-dns
+INC_DIR += $(REP_DIR)/src/lib/bind9
 INC_DIR += $(BIND9_DIR)/lib/dns
 INC_DIR += $(BIND9_DIR)/lib/dns/include
 INC_DIR += $(BIND9_DIR)/lib/isc/include

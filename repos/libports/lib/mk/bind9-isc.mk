@@ -11,7 +11,7 @@ SRC_C += $(filter-out $(FILTER_OUT_U),$(notdir $(wildcard $(BIND9_DIR)/lib/isc/u
 vpath %.c $(BIND9_DIR)/lib/isc/unix
 vpath %.c $(BIND9_DIR)/lib/isc
 
-INC_DIR += $(REP_DIR)/src/lib/bind9-isc
+INC_DIR += $(REP_DIR)/src/lib/bind9
 INC_DIR += $(BIND9_DIR)/lib/isc/include
 INC_DIR += $(BIND9_DIR)/lib/isc/unix/include
 INC_DIR += $(BIND9_DIR)/lib/isc/nothreads/include
