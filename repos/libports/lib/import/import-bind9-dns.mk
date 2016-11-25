@@ -1,2 +1,3 @@
-DNS_PORT_DIR := $(call select_from_ports,bind9)/src/lib/bind9
-INC_DIR += $(DNS_PORT_DIR)/lib/dns/include
+include $(call select_from_repositories,lib/import/import-bind9.inc)
+
+INC_DIR += $(BIND9_PORT_DIR)/lib/dns/include
