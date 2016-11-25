@@ -18,7 +18,7 @@ INC_DIR += $(BIND9_DIR)/lib/isc/nothreads/include
 INC_DIR += $(BIND9_DIR)/lib/isc/noatomic/include
 INC_DIR += $(BIND9_DIR)/lib/dns/include
 
-VERSION = "9.11"
+VERSION = "9.11.0"
 LIBINTERFACE = 165
 LIBREVISION = 1
 LIBAGE = 5
