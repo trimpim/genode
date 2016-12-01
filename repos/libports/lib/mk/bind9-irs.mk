@@ -1,11 +1,15 @@
 BIND9_DIR := $(call select_from_ports,bind9)/src/lib/bind9
 
-SRC_C = $(notdir $(wildcard $(BIND9_DIR)/lib/bind9/*.c))
+FILTER_OUT_C += entropy.c
+FILTER_OUT_C += $(notdir $(wildcard $(BIND9_DIR)/lib/isc/*_api.c))
 
-vpath %.c $(BIND9_DIR)/lib/bind9
+FILTER_OUT_U += $(notdir $(wildcard $(BIND9_DIR)/lib/isc/unix/ifiter_*.c))
 
-INC_DIR += $(REP_DIR)/src/lib/bind9
-INC_DIR += $(BIND9_DIR)/lib/bind9/include
+SRC_C += $(filter-out $(FILTER_OUT_C),$(notdir $(wildcard $(BIND9_DIR)/lib/isc/*.c)))
+SRC_C += $(filter-out $(FILTER_OUT_U),$(notdir $(wildcard $(BIND9_DIR)/lib/isc/unix/*.c)))
+
+vpath %.c $(BIND9_DIR)/lib/isc/unix
+vpath %.c $(BIND9_DIR)/lib/isc
 
 INC_DIR += $(REP_DIR)/src/lib/bind9
 INC_DIR += $(BIND9_DIR)/lib/isc/include
@@ -13,12 +17,11 @@ INC_DIR += $(BIND9_DIR)/lib/isc/unix/include
 INC_DIR += $(BIND9_DIR)/lib/isc/nothreads/include
 INC_DIR += $(BIND9_DIR)/lib/isc/noatomic/include
 INC_DIR += $(BIND9_DIR)/lib/dns/include
-INC_DIR += $(BIND9_DIR)/lib/isccfg/include/
 
 VERSION = "9.11.0"
-LIBINTERFACE = 160
-LIBREVISION = 2
-LIBAGE = 0
+LIBINTERFACE = 165
+LIBREVISION = 1
+LIBAGE = 5
 
 CC_C_OPT += -w -std=gnu99
 CC_C_OPT += -DVERSION=\"${VERSION}\"
@@ -26,4 +29,4 @@ CC_C_OPT += -DLIBINTERFACE=${LIBINTERFACE}
 CC_C_OPT += -DLIBREVISION=${LIBREVISION}
 CC_C_OPT += -DLIBAGE=${LIBAGE}
 
-LIBS += libc bind9-dns bind9-irs bind9-isc
+LIBS += libc libc-inet lxip zlib

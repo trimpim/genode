@@ -5,3 +5,23 @@ DOWNLOADS := bind9.git
 URL(bind9) := https://source.isc.org/git/bind9.git
 DIR(bind9) := src/lib/bind9
 REV(bind9) := 1477c19dd9a347ee19a42dac227f299a4680506f
+
+DIRS := include/bind9
+DIRS += include/bind9/dns
+DIRS += include/bind9/dst
+DIRS += include/bind9/irs
+DIRS += include/bind9/isc
+DIRS += include/bind9/isc/unix/isc
+DIRS += include/bind9/isc/platform/isc
+DIRS += include/bind9/isc/nothreads/isc
+DIRS += include/bind9/isc/noatomic/isc
+
+DIR_CONTENT(include/bind9) := src/lib/bind9/lib/bind9/include/bind9/*.h
+DIR_CONTENT(include/bind9/dns) := src/lib/bind9/lib/dns/include/dns/*.h
+DIR_CONTENT(include/bind9/dst) := src/lib/bind9/lib/dns/include/dst/*.h
+DIR_CONTENT(include/bind9/irs) := src/lib/bind9/lib/irs/include/irs/*.h
+DIR_CONTENT(include/bind9/isc) := src/lib/bind9/lib/isc/include/isc/*.h
+DIR_CONTENT(include/bind9/isc/unix/isc) := src/lib/bind9/lib/isc/unix/include/isc/*.h
+DIR_CONTENT(include/bind9/isc/platform/isc) := $(REP_DIR)/src/lib/bind9/isc/platform.h
+DIR_CONTENT(include/bind9/isc/noatomic/isc) := src/lib/bind9/lib/isc/noatomic/include/isc/*.h
+DIR_CONTENT(include/bind9/isc/nothreads/isc) := src/lib/bind9/lib/isc/nothreads/include/isc/*.h
