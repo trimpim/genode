@@ -1,3 +1,3 @@
-TARGET = random_pseudo
+TARGET = xoroshiro_terminal
 SRC_CC = main.cc
 LIBS   = base config

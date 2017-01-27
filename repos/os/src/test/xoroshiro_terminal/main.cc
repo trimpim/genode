@@ -1,8 +1,7 @@
 /*
- * \brief  Test client for the Hello RPC interface
- * \author Björn Döbel
- * \author Norman Feske
- * \date   2008-03-20
+ * \brief  Test program for the xoroshiro_terminal
+ * \author Pirmin Duss
+ * \date   -----------
  */
 
 /*
@@ -16,7 +15,7 @@
 #include <base/log.h>
 #include <terminal_session/connection.h>
 
-#include <random/random.h>
+#include "helper.h"
 
 
 Genode::size_t Component::stack_size() { return 64*1024; }
@@ -38,50 +37,46 @@ void Component::construct(Genode::Env &env)
 	char tmp[16];
 
 	for (auto i=0; i<cnt; ++i) {
-		int8_t i8val = Random::getInt8(lRandom);
+		int8_t i8val = Xoroshiro_terminal_test::int8(lRandom);
 		Genode::log("getting a random int8_t   : ", static_cast<int>(i8val));
 	}
 
 	for (auto i=0; i<cnt; ++i) {
-		uint8_t ui8val = Random::getUint8(lRandom);
+		uint8_t ui8val = Xoroshiro_terminal_test::uint8(lRandom);
 		Genode::log("getting a random uint8_t  : ", static_cast<uint16_t>(ui8val));
 	}
 
 	for (auto i=0; i<cnt; ++i) {
-		int16_t i16val = Random::getInt16(lRandom);
+		int16_t i16val = Xoroshiro_terminal_test::int16(lRandom);
 		Genode::log("getting a random int16_t  : ", i16val);
 	}
 
 	for (auto i=0; i<cnt; ++i) {
-		uint16_t ui16val = Random::getUint16(lRandom);
+		uint16_t ui16val = Xoroshiro_terminal_test::uint16(lRandom);
 		Genode::log("getting a random uint16_t : ", ui16val);
 	}
 
 	for (auto i=0; i<cnt; ++i) {
-		int32_t i32val = Random::getInt32(lRandom);
+		int32_t i32val = Xoroshiro_terminal_test::int32(lRandom);
 		Genode::log("getting a random int32_t  : ", i32val);
 	}
 
 	for (auto i=0; i<cnt; ++i) {
-		uint32_t ui32val = Random::getInt32(lRandom);
+		uint32_t ui32val = Xoroshiro_terminal_test::uint32(lRandom);
 		Genode::log("getting a random uint32_t : ", ui32val);
 	}
 
 	for (auto i=0; i<cnt; ++i) {
 		lRandom.read(&tmp, sizeof(int64_t));
-		int64_t i64val = tmp[0] + (tmp[1] << 8) + (tmp[2] << 16) +
-			             (tmp[3] << 24) + (tmp[4] << 32) + (tmp[5] << 40) +
-			             (tmp[6] << 48) + (tmp[7] << 56);
+		int64_t i64val = Xoroshiro_terminal_test::int64(lRandom);
 		Genode::log("getting a random int64_t  : ", i64val);
 	}
 
 	for (auto i=0; i<cnt; ++i) {
 		lRandom.read(&tmp, sizeof(uint64_t));
-		uint64_t ui64val = tmp[0] + (tmp[1] << 8) + (tmp[2] << 16) +
-			               (tmp[3] << 24) + (tmp[4] << 32) + (tmp[5] << 40) +
-			               (tmp[6] << 48) + (tmp[7] << 56);
+		uint64_t ui64val = Xoroshiro_terminal_test::uint64(lRandom);
 		Genode::log("getting a random uint64_t : ", ui64val);
 	}
 
-	Genode::log("random test completed");
+	Genode::log("xoroshiro_terminal test completed");
 }

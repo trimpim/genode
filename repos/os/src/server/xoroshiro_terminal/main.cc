@@ -1,5 +1,6 @@
 /*
- * \brief  this server provides pseudo random numbers.
+ * \brief  this server provides pseudo random numbers generated
+ *         by the xoroshiro algorythm.
  * \author Pirmin Duss
  * \date   2016-11-08
  */
@@ -24,7 +25,7 @@
 
 #include "xoroshiro.h"
 
-namespace Random {
+namespace Xsoroshiro_terminal {
 	class Session_component;
 	class Root_component;
 	struct Main;
@@ -34,12 +35,12 @@ namespace Random {
 }
 
 
-class Random::Session_component : public Rpc_object<Terminal::Session, Session_component>
+class Xsoroshiro_terminal::Session_component : public Rpc_object<Terminal::Session, Session_component>
 {
 	public:
 
 		Session_component(Env& env, uint64_t seed) :
-			_io_buffer(&env.ram(), IO_BUFFER_SIZE),
+			_io_buffer(env.ram(), env.rm(), IO_BUFFER_SIZE),
 			_xoroshiro{seed} {
 			log(" seeding pseudo random with seed=", seed);
 		}
@@ -48,7 +49,7 @@ class Random::Session_component : public Rpc_object<Terminal::Session, Session_c
 
 		Session::Size size() override { return Session::Size(0, 0); }
 
-		bool avail() override { return true; } // TODO
+		bool avail() override { return true; }
 
 		size_t _read(size_t dst_len)
 		{
@@ -95,7 +96,7 @@ class Random::Session_component : public Rpc_object<Terminal::Session, Session_c
 };
 
 
-class Random::Root_component : public Genode::Root_component<Session_component>
+class Xsoroshiro_terminal::Root_component : public Genode::Root_component<Session_component>
 {
 	public:
 
@@ -125,7 +126,7 @@ class Random::Root_component : public Genode::Root_component<Session_component>
 };
 
 
-class Random::Main
+class Xsoroshiro_terminal::Main
 {
 	public:
 
@@ -149,9 +150,9 @@ class Random::Main
 		 */
 		Sliced_heap sliced_heap { _env.ram(),  _env.rm() };
 
-		Random::Root_component root { _env, sliced_heap };
+		Xsoroshiro_terminal::Root_component root { _env, sliced_heap };
 };
 
 
 Genode::size_t Component::stack_size() { return 8 * sizeof(Genode::addr_t) * 1024; }
-void Component::construct(Genode::Env &env) { static Random::Main main(env); }
+void Component::construct(Genode::Env &env) { static Xsoroshiro_terminal::Main main(env); }

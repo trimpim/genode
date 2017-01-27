@@ -5,8 +5,8 @@
 build {
 	core
 	init
-	server/random_pseudo
-	test/random_test
+	server/xoroshiro_terminal
+	test/xoroshiro_terminal
 }
 
 create_boot_directory
@@ -24,14 +24,14 @@ install_config {
 	<default-route>
 		<any-service> <parent/> <any-child/> </any-service>
 	</default-route>
-	<start name="random_pseudo">
+	<start name="xoroshiro_terminal">
 		<resource name="RAM" quantum="4M"/>
 		<provides> <service name="Terminal"/> </provides>
 		<config>
 			<seed value="1234"/>
 		</config>
 	</start>
-	<start name="random_test">
+	<start name="test-xoroshiro_terminal">
 		<resource name="RAM" quantum="4M"/>
 	</start>
 </config>}
@@ -42,10 +42,11 @@ install_config {
 build_boot_image {
 	core
 	init
-	random_pseudo
-	random_test
+	xoroshiro_terminal
+	test-xoroshiro_terminal
+	ld.lib.so
 }
 
 append qemu_args " -nographic "
 
-run_genode_until "random test completed.*\n" 10
+run_genode_until "xoroshiro_terminal test completed.*\n" 10
