@@ -1,0 +1,63 @@
+#
+# Build
+#
+
+build {
+	core
+	init
+	server/xoroshiro_terminal
+	test/xoroshiro_terminal_libc
+}
+
+create_boot_directory
+
+#
+# Generate config
+#
+
+install_config {
+<config verbose="yes">
+	<parent-provides>
+		<service name="LOG"/>
+		<service name="ROM"/>
+	</parent-provides>
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+	<start name="xoroshiro_terminal">
+		<resource name="RAM" quantum="4M"/>
+		<provides> <service name="Terminal"/> </provides>
+		<config>
+			<seed value="874732983"/>
+		</config>
+	</start>
+	<start name="test-xoroshiro_terminal_libc">
+		<resource name="RAM" quantum="4M"/>
+		<libc stdout="/dev/log" stderr="/dev/log" terminal="/dev/random">
+			<vfs>
+				<dir name="dev"> <log/> </dir>
+			</vfs>
+		</libc>
+		<vfs>
+			<terminal name="xoroshiro_terminal" label="/dev/random"/>
+		</vfs>
+	</start>
+</config>}
+
+#
+# Boot image
+#
+build_boot_image {
+	core
+	init
+	xoroshiro_terminal
+	test-xoroshiro_terminal_libc
+	ld.lib.so
+	libc.lib.so
+	libm.lib.so
+	stdcxx.lib.so
+}
+
+append qemu_args " -nographic "
+
+run_genode_until "xoroshiro_terminal test completed.*\n" 10
