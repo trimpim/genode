@@ -42,7 +42,8 @@ class Xsoroshiro_terminal::Session_component : public Rpc_object<Terminal::Sessi
 
 		Session_component(Env& env, uint64_t seed) :
 			_io_buffer(env.ram(), env.rm(), IO_BUFFER_SIZE),
-			_xoroshiro{seed} {
+			_xoroshiro{seed}
+    {
 			log(" seeding pseudo random with seed=", seed);
 		}
 
@@ -67,10 +68,10 @@ class Xsoroshiro_terminal::Session_component : public Rpc_object<Terminal::Sessi
 			return num_bytes;
 		}
 
-		void _write(size_t num_bytes)
+		size_t _write(size_t num_bytes)
 		{
-			warning("write to random server not supported.");
-			return;
+			warning("write to xoroshiro_terminal not supported.");
+			return 0;
 		}
 
 		Dataspace_capability _dataspace()
@@ -106,9 +107,7 @@ class Xsoroshiro_terminal::Root_component : public Genode::Root_component<Sessio
 			_env(env)
 		{
 			try {
-				//Xml_node seed_node = config()->xml_node().sub_node("seed");
 				Attached_rom_dataspace config(env, "config");
-				if (config.xml().attribute_value("ld_bind_now", false))
 				_seed = config.xml().sub_node("seed").attribute_value("value", 42UL);
 			} catch (Rom_connection::Rom_connection_failed) {
 				_seed = 42;
