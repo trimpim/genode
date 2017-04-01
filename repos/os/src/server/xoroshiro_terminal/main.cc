@@ -18,10 +18,11 @@
 #include <root/component.h>
 
 #include <base/rpc_server.h>
-#include <os/config.h>
 #include <util/arg_string.h>
+#include <util/xml_node.h>
 #include <terminal_session/terminal_session.h>
-#include <os/attached_ram_dataspace.h>
+#include <base/attached_ram_dataspace.h>
+#include <base/attached_rom_dataspace.h>
 
 #include "xoroshiro.h"
 
@@ -105,9 +106,11 @@ class Xsoroshiro_terminal::Root_component : public Genode::Root_component<Sessio
 			_env(env)
 		{
 			try {
-				Xml_node seed_node = config()->xml_node().sub_node("seed");
-				_seed = seed_node.attribute_value("value", 42UL);
-			} catch (...) {
+				//Xml_node seed_node = config()->xml_node().sub_node("seed");
+				Attached_rom_dataspace config(env, "config");
+				if (config.xml().attribute_value("ld_bind_now", false))
+				_seed = config.xml().sub_node("seed").attribute_value("value", 42UL);
+			} catch (Rom_connection::Rom_connection_failed) {
 				_seed = 42;
 			}
 		}
@@ -154,5 +157,4 @@ class Xsoroshiro_terminal::Main
 };
 
 
-Genode::size_t Component::stack_size() { return 8 * sizeof(Genode::addr_t) * 1024; }
 void Component::construct(Genode::Env &env) { static Xsoroshiro_terminal::Main main(env); }
