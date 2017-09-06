@@ -28,6 +28,7 @@ install_config {
 	<default-route>
 		<any-service> <parent/> <any-child/> </any-service>
 	</default-route>
+	<default caps="100"/>
 	<start name="xoroshiro_terminal">
 		<resource name="RAM" quantum="4M"/>
 		<provides> <service name="Terminal"/> </provides>
