@@ -1,0 +1,121 @@
+
+set mke2fs [check_installed mke2fs]
+set dd     [check_installed dd]
+
+#
+# Build
+#
+set build_components {
+	core
+	drivers/timer
+	drivers/ahci
+	server/block_stripe
+	test/blk
+}
+
+import_from_depot "genodelabs/src/init"
+import_from_depot "genodelabs/src/ahci_drv"
+
+source ${genode_dir}/repos/base/run/platform_drv.inc
+append_platform_drv_build_components
+
+build $build_components
+#
+# Build EXT2-file-system image
+#
+catch { exec $dd if=/dev/zero of=bin/stripe1.raw bs=1M count=64 }
+catch { exec $dd if=/dev/zero of=bin/stripe2.raw bs=1M count=64 }
+#catch { exec $mke2fs -F bin/ext2.raw }
+
+create_boot_directory
+
+#
+# Generate config
+#
+set config {
+<config>
+	<parent-provides>
+		<service name="ROM"/>
+		<service name="IRQ"/>
+		<service name="IO_MEM"/>
+		<service name="IO_PORT"/>
+		<service name="PD"/>
+		<service name="RM"/>
+		<service name="CPU"/>
+		<service name="LOG"/>
+	</parent-provides>
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+	<default caps="100"/>
+	<start name="timer">
+		<resource name="RAM" quantum="1M"/>
+		<provides><service name="Timer"/></provides>
+	</start>
+}
+
+append_platform_drv_config
+
+append config {
+	<start name="ahci_drv">
+		<resource name="RAM" quantum="10M" />
+		<provides> <service name="Block" /> </provides>
+		<config>
+			<policy label="block_stripe -> stripe0" device="1" writeable="yes" />
+			<policy label="block_stripe -> stripe1" device="2" writeable="yes" />
+		</config>
+	</start>
+
+	<start name="block_stripe">
+		<resource name="RAM" quantum="16M" />
+		<provides> <service name="Block" /> </provides>
+		<config>
+			<stripe block_size="512" block_count="65536" writeable="yes" mode_interleave="yes">
+				<block label="stripe0" writeable="yes"/>
+				<block label="stripe1" writeable="yes"/>
+			</stripe>
+			<policy label="stripe" writeable="yes"/>
+			<report interval="1000" total="yes" individual="yes"/>
+		</config>
+		<route>
+			<service name="Block"> <child name="ahci_drv"/> </service>
+			<any-service> <parent/> <any-child /> </any-service>
+		</route>
+	</start>
+
+	<start name="test-blk-cli">
+		<resource name="RAM" quantum="50M" />
+		<route>
+			<service name="Block"> <child name="block_stripe"/> </service>
+			<any-service> <parent/> <any-child /> </any-service>
+		</route>
+	</start>
+</config> }
+
+install_config $config
+
+#
+# Boot modules
+#
+set boot_modules {
+	core
+	init
+	timer
+	ahci_drv
+	block_stripe
+	test-blk-srv
+	test-blk-cli
+	ld.lib.so
+}
+
+append_platform_drv_boot_modules
+
+build_boot_image $boot_modules
+
+append qemu_args " -nographic -device ahci,id=ahci -boot d "
+append qemu_args " -drive id=disk1,file=bin/stripe1.raw,format=raw,if=none -device ide-hd,drive=disk1,bus=ahci.0"
+append qemu_args " -drive id=disk2,file=bin/stripe2.raw,format=raw,if=none -device ide-hd,drive=disk2,bus=ahci.1"
+
+run_genode_until "Done.*\n" 100
+
+exec rm -f bin/ext2.raw
