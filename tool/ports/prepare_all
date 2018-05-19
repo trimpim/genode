@@ -1,0 +1,24 @@
+#!/bin/bash
+
+DIR=$(pwd)
+
+for port in $(${DIR}/tool/ports/list); do
+
+	port_dir=$(${DIR}/tool/ports/current ${port})
+	if [ ! -d ${port_dir} ]; then
+
+		if [ "chuck" == ${port} ]; then
+			continue
+		fi
+
+		if [ -d "${port_dir}.incomplete" ]; then
+			rm -Rf "${port_dir}.incomplete"
+		fi
+
+		${DIR}/tool/ports/prepare_port ${port}
+
+		if [ $? -ne 0 ]; then
+			exit $?
+		fi
+	fi
+done
