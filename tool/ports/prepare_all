@@ -1,13 +1,14 @@
 #!/bin/bash
 
 DIR=$(pwd)
+black_list=${DIR}/tool/ports/blacklist
 
 for port in $(${DIR}/tool/ports/list); do
 
 	port_dir=$(${DIR}/tool/ports/current ${port})
 	if [ ! -d ${port_dir} ]; then
 
-		if [ "chuck" == ${port} ]; then
+		if [ "$(grep ${port} ${black_list})" != "" ]; then
 			continue
 		fi
 
