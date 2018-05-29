@@ -107,6 +107,7 @@ append config {
 				<policy label="power_manager -> acpi_ac" report="acpica -> acpi_ac"/>
 				<policy label="power_manager -> acpi_battery" report="acpica -> acpi_battery"/>
 				<policy label="power_manager -> acpi_ec" report="acpica -> acpi_ec"/>
+				<policy label="power_manager -> acpi_lid" report="acpica -> acpi_lid"/>
 			</config>
 			<route>
 				<any-service> <parent/> </any-service>
