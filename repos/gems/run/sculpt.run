@@ -32,6 +32,8 @@ install_config {
 		<any-service> <parent/> <any-child/> </any-service>
 	</default-route>
 
+	<affinity-space width="4" height="1"/>
+
 	<default caps="100"/>
 
 	<resource name="RAM" preserve="2M"/>
