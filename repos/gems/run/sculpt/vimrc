@@ -7,4 +7,28 @@ set viminfo=
 set backspace=indent,eol,start
 set nowrap
 set ruler
-set ts=2
+
+" show line numbers
+set nu
+set rnu
+set numberwidth=4
+
+" serching options
+set ignorecase
+set smartcase
+set hlsearch
+set incsearch
+set magic
+
+" handling for tabulators/indent
+set noexpandtab
+set smarttab
+set shiftwidth=4
+set tabstop=4
+set ai
+set si
+
+" settings for colors
+set t_Co=256
+set background=dark
+"colorscheme jellybeans
