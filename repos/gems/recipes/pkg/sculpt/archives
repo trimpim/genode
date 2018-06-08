@@ -20,7 +20,7 @@ _/src/posix
 _/src/ncurses
 _/src/noux
 _/src/bash-minimal
-_/src/vim-minimal
+_/src/vim
 _/src/coreutils-minimal
 _/src/vfs
 _/src/vfs_lxip
