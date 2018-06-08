@@ -118,7 +118,7 @@ void Sculpt::gen_noux_start(Xml_generator &xml, Rom_name const &name,
 		xml.node("fstab", [&] () {
 			gen_named_node(xml, "tar", "bash-minimal.tar");
 			gen_named_node(xml, "tar", "coreutils-minimal.tar");
-			gen_named_node(xml, "tar", "vim-minimal.tar");
+			gen_named_node(xml, "tar", "vim.tar");
 			gen_named_node(xml, "dir", "dev", [&] () {
 				xml.node("null",  [&] () {});
 				xml.node("zero",  [&] () {});
@@ -169,7 +169,7 @@ void Sculpt::gen_noux_start(Xml_generator &xml, Rom_name const &name,
 		gen_parent_rom_route(xml, "libm.lib.so");
 		gen_parent_rom_route(xml, "bash-minimal.tar");
 		gen_parent_rom_route(xml, "coreutils-minimal.tar");
-		gen_parent_rom_route(xml, "vim-minimal.tar");
+		gen_parent_rom_route(xml, "vim.tar");
 		gen_parent_rom_route(xml, "ncurses.lib.so");
 		gen_parent_rom_route(xml, "posix.lib.so");
 		gen_parent_rom_route(xml, "depot_users.tar");

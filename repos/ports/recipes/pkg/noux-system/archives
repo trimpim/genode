@@ -1,7 +1,7 @@
 _/raw/noux-system
 _/src/noux
 _/src/bash-minimal
-_/src/vim-minimal
+_/src/vim
 _/src/coreutils-minimal
 _/src/libc
 _/src/posix

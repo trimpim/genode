@@ -24,7 +24,7 @@
 		<rom label="ncurses.lib.so"/>
 		<rom label="bash-minimal.tar"/>
 		<rom label="coreutils-minimal.tar"/>
-		<rom label="vim-minimal.tar"/>
+		<rom label="vim.tar"/>
 		<rom label="vfs.lib.so"/>
 	</content>
 
