@@ -1,0 +1,17 @@
+This component analyzes a init state report and porduces an xml configuration
+that can be feed in to a menu_view to analyze the memory and CAP consumation
+inside this init.
+
+Configuration
+-------------
+
+The following example shows the default values.
+
+! <config monitor_caps="no"/>
+
+The report from init needs at least to report child_ram. For capability monitoring
+additionally child_caps are required.
+
+This can be achived by adding the following to the config of init:
+
+! <report init_ram="yes" init_caps="yes" child_ram="yes" child_caps="yes"/>
