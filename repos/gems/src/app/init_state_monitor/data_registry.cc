@@ -72,9 +72,11 @@ void Init_state_monitor::Data_registry::_child_ram(Xml_generator& xml,
 					xml.attribute("percent", percent);
 					xml.attribute("width", 200);
 					xml.attribute("height", 20);
-					xml.attribute("text", string(percent, rest));
+					xml.attribute("text", String<50>(string(percent, rest),
+                                           " / ", entry->_ram_quota));
 				});
 			});
+			/*
 			xml.node("float", [&] () {
 				_insert_name_attribute(xml);
 				_insert_vbox_left_attribute(xml);
@@ -90,6 +92,7 @@ void Init_state_monitor::Data_registry::_child_ram(Xml_generator& xml,
 					xml.attribute("text", string(percent, rest));
 				});
 			});
+			*/
 		});
 	});
 }
@@ -115,9 +118,11 @@ void Init_state_monitor::Data_registry::_child_caps(Xml_generator& xml,
 					xml.attribute("percent", percent);
 					xml.attribute("width", 200);
 					xml.attribute("height", 20);
-					xml.attribute("text", string(percent, rest));
+					xml.attribute("text", String<50>(string(percent, rest),
+                                           " / ", entry->_cap_quota));
 				});
 			});
+			/*
 			xml.node("float", [&] () {
 				_insert_name_attribute(xml);
 				_insert_vbox_left_attribute(xml);
@@ -133,6 +138,7 @@ void Init_state_monitor::Data_registry::_child_caps(Xml_generator& xml,
 					xml.attribute("text", string(percent, rest));
 				});
 			});
+			*/
 		});
 	});
 }
@@ -152,7 +158,8 @@ void Init_state_monitor::Data_registry::_init_ram(Xml_generator& xml)
 			xml.attribute("percent", percent);
 			xml.attribute("width", 200);
 			xml.attribute("height", 28);
-			xml.attribute("text", string(percent, rest));
+			xml.attribute("text", String<50>(string(percent, rest),
+                                       " / ", _ram_quota));
 		});
 	});
 }
@@ -172,7 +179,8 @@ void Init_state_monitor::Data_registry::_init_caps(Xml_generator& xml)
 			xml.attribute("percent", percent);
 			xml.attribute("width", 200);
 			xml.attribute("height", 28);
-			xml.attribute("text", string(percent, rest));
+			xml.attribute("text", String<50>(string(percent, rest),
+                                       " / ", _cap_quota));
 		});
 	});
 }
