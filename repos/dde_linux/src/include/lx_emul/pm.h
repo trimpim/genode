@@ -48,6 +48,14 @@ struct dev_pm_ops {
 	int (*restore_early)(struct device *dev);
 };
 
+struct dev_pm_domain {
+	struct dev_pm_ops	ops;
+	void (*detach)(struct device *dev, bool power_off);
+	int (*activate)(struct device *dev);
+	void (*sync)(struct device *dev);
+	void (*dismiss)(struct device *dev);
+};
+
 #define PMSG_IS_AUTO(msg) 0
 
 enum { PM_EVENT_AUTO_SUSPEND = 0x402 };

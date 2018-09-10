@@ -1,0 +1,118 @@
+--- a/drivers/gpu/drm/drm_connector.c
++++ b/drivers/gpu/drm/drm_connector.c
+@@ -544,7 +544,9 @@
+ {
+ 	iter->dev = dev;
+ 	iter->conn = NULL;
++#ifdef CONFIG_LOCKDEP
+ 	lock_acquire_shared_recursive(&connector_list_iter_dep_map, 0, 1, NULL, _RET_IP_);
++#endif
+ }
+ EXPORT_SYMBOL(drm_connector_list_iter_begin);
+ 
+@@ -625,7 +627,9 @@
+ 		__drm_connector_put_safe(iter->conn);
+ 		spin_unlock_irqrestore(&config->connector_list_lock, flags);
+ 	}
++#ifdef CONFIG_LOCKDEP
+ 	lock_release(&connector_list_iter_dep_map, 0, _RET_IP_);
++#endif
+ }
+ EXPORT_SYMBOL(drm_connector_list_iter_end);
+ 
+--- a/include/drm/drm_mm.h
++++ b/include/drm/drm_mm.h
+@@ -423,7 +423,7 @@
+ 				     struct drm_mm_node *node,
+ 				     u64 size)
+ {
+-	return drm_mm_insert_node_generic(mm, node, size, 0, 0, 0);
++	return drm_mm_insert_node_generic(mm, node, size, 0, 0, DRM_MM_INSERT_BEST);
+ }
+ 
+ void drm_mm_remove_node(struct drm_mm_node *node);
+--- a/include/drm/drm_print.h
++++ b/include/drm/drm_print.h
+@@ -122,10 +122,9 @@
+  */
+ static inline struct drm_printer drm_debug_printer(const char *prefix)
+ {
+-	struct drm_printer p = {
+-		.printfn = __drm_printfn_debug,
+-		.prefix = prefix
+-	};
++	struct drm_printer p;
++	p.printfn = __drm_printfn_debug;
++	p.prefix = prefix;
+ 	return p;
+ }
+ #endif /* DRM_PRINT_H_ */
+--- a/drivers/i2c/i2c-core-base.c
++++ b/drivers/i2c/i2c-core-base.c
+@@ -1276,9 +1276,11 @@
+ 		goto out_list;
+ 	}
+ 
++#if IS_ENABLED(CONFIG_I2C_SMBUS) && IS_ENABLED(CONFIG_OF)
+ 	res = of_i2c_setup_smbus_alert(adap);
+ 	if (res)
+ 		goto out_reg;
++#endif
+ 
+ 	dev_dbg(&adap->dev, "adapter [%s] registered\n", adap->name);
+ 
+@@ -1311,7 +1313,9 @@
+ 
+ 	return 0;
+ 
++#if IS_ENABLED(CONFIG_I2C_SMBUS) && IS_ENABLED(CONFIG_OF)
+ out_reg:
++#endif
+ 	init_completion(&adap->dev_released);
+ 	device_unregister(&adap->dev);
+ 	wait_for_completion(&adap->dev_released);
+--- a/drivers/gpu/drm/drm_framebuffer.c
++++ b/drivers/gpu/drm/drm_framebuffer.c
+@@ -675,7 +675,8 @@
+ 	INIT_LIST_HEAD(&fb->filp_head);
+ 
+ 	fb->funcs = funcs;
+-	strcpy(fb->comm, current->comm);
++	if (current) /* used for debugging */
++		strcpy(fb->comm, current->comm);
+ 
+ 	ret = __drm_mode_object_add(dev, &fb->base, DRM_MODE_OBJECT_FB,
+ 				    false, drm_framebuffer_free);
+--- a/include/drm/ttm/ttm_bo_driver.h
++++ b/include/drm/ttm/ttm_bo_driver.h
+@@ -919,6 +919,7 @@
+ 
+ 	WARN_ON(!kref_read(&bo->kref));
+ 
++#ifdef CONFIG_LOCKDEP
+ 	if (interruptible)
+ 		ret = ww_mutex_lock_slow_interruptible(&bo->resv->lock,
+ 						       ticket);
+@@ -929,6 +930,7 @@
+ 		ttm_bo_del_sub_from_lru(bo);
+ 	else if (ret == -EINTR)
+ 		ret = -ERESTARTSYS;
++#endif
+ 
+ 	return ret;
+ }
+@@ -942,12 +944,14 @@
+  */
+ static inline void ttm_bo_unreserve(struct ttm_buffer_object *bo)
+ {
++#ifdef CONFIG_LOCKDEP
+ 	if (!(bo->mem.placement & TTM_PL_FLAG_NO_EVICT)) {
+ 		spin_lock(&bo->glob->lru_lock);
+ 		ttm_bo_add_to_lru(bo);
+ 		spin_unlock(&bo->glob->lru_lock);
+ 	}
+ 	reservation_object_unlock(bo->resv);
++#endif
+ }
+ 
+ /*

@@ -3,7 +3,7 @@ VERSION     := 2
 DOWNLOADS   := dwc_otg.git usb.archive intel_fb.archive lxip.archive \
                wifi.archive fec.archive libnl.archive wpa_supplicant.git \
                fw.archive usb_host.archive dwc_otg_host.git usb_hid.archive \
-               usb_net.archive
+               usb_net.archive amdgpu_fb.archive
 
 #
 # Tools
@@ -84,6 +84,17 @@ TAR_OPT(intel_fb) := --strip-components=1  --files-from - < <(sed 's/-x.x.x/-$(V
 HASH_INPUT        += $(REP_DIR)/intel_fb.list
 
 #
+# AMD framebuffer driver (amdgpu)
+#
+SRC_DIR_AMDGPU_FB  := src/drivers/framebuffer/amdgpu
+VERSION_AMDGPU_FB  := 4.16.3
+URL(amdgpu_fb)     := https://www.kernel.org/pub/linux/kernel/v4.x/linux-$(VERSION_AMDGPU_FB).tar.xz
+SHA(amdgpu_fb)     := 0d6971a81da97e38b974c5eba31a74803bfe41aabc46d406c3acda56306c81a3
+DIR(amdgpu_fb)     := $(SRC_DIR_AMDGPU_FB)
+TAR_OPT(amdgpu_fb) := --strip-components=1  --files-from - < <(sed 's/-x.x.x/-$(VERSION_AMDGPU_FB)/g' $(REP_DIR)/amdgpu_fb.list)
+HASH_INPUT         += $(REP_DIR)/amdgpu_fb.list
+
+#
 # mac80211 stack, iwlwifi sources
 #
 SRC_DIR_WIFI  := src/lib/wifi
@@ -148,7 +159,7 @@ PATCHES += $(addprefix patches/,$(notdir $(wildcard $(REP_DIR)/patches/lxip*.pat
 PATCHES += $(addprefix patches/,$(notdir $(wildcard $(REP_DIR)/patches/intel*.patch)))
 PATCHES += $(addprefix patches/,$(notdir $(wildcard $(REP_DIR)/patches/usb_host*.patch)))
 PATCHES += $(addprefix patches/,$(notdir $(wildcard $(REP_DIR)/patches/usb*.patch)))
-PATCHES += $(addprefix patches/,$(notdir $(wildcard $(REP_DIR)/patches/intel*.patch)))
+PATCHES += $(addprefix patches/,$(notdir $(wildcard $(REP_DIR)/patches/amdgpu*.patch)))
 PATCHES += $(addprefix patches/,$(notdir $(wildcard $(REP_DIR)/patches/fec_*.patch)))
 PATCHES += $(addprefix patches/,$(notdir $(wildcard $(REP_DIR)/patches/usb_hid*.patch)))
 
@@ -205,6 +216,11 @@ PATCH_OPT(patches/intel_fb_drm.patch)       := -p1 -d$(SRC_DIR_INTEL_FB)
 PATCH_OPT(patches/intel_fb_early.patch)     := -p1 -d$(SRC_DIR_INTEL_FB)
 # drop it when https://bugs.freedesktop.org/show_bug.cgi?id=107125 gets fixed
 PATCH_OPT(patches/intel_fb_hotplug.patch)   := -p1 -d$(SRC_DIR_INTEL_FB)
+
+# AMDGPU FB
+PATCH_OPT(patches/amdgpu_fb_drm.patch)      := -p1 -d$(SRC_DIR_AMDGPU_FB)
+PATCH_OPT(patches/amdgpu_fb_early.patch)    := -p1 -d$(SRC_DIR_AMDGPU_FB)
+PATCH_OPT(patches/amdgpu_fb_drm.patch)      := -p1 -d$(SRC_DIR_AMDGPU_FB)
 
 # Freescale NIC
 PATCH_OPT(patches/fec_skbuff_cast.patch) := -p1 -d$(SRC_DIR_FEC)
