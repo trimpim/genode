@@ -48,7 +48,7 @@ namespace Ssh {
 /**
  * forward declaration of the write available callback.
  */
-static int write_avail_cb(socket_t fd, int revents, void *userdata);
+int write_avail_cb(socket_t fd, int revents, void *userdata);
 
 
 struct Ssh::Session : Genode::Registry<Session>::Element
@@ -102,8 +102,8 @@ struct Ssh::Terminal_session : Genode::Registry<Terminal_session>::Element
 
 	Terminal_session(Genode::Registry<Terminal_session> &reg,
 	                 Ssh::Terminal &conn,
-	                 ssh_event event_loop) :
-		Element{ reg, *this }, conn{ conn }, _event_loop{ event_loop }
+	                 ssh_event event_loop)
+	: Element(reg, *this), conn(conn), _event_loop(event_loop)
 	{
 		if (pipe(_fds) ||
 			ssh_event_add_fd(_event_loop,
@@ -198,7 +198,6 @@ class Ssh::Server
 		 */
 
 		static void *_server_loop(void *arg);
-		static int _stderr_avail_cb(socket_t fd, int revents, void *userdata);
 
 		bool _allow_multi_login(ssh_session s, Login const &login);
 
@@ -273,21 +272,9 @@ class Ssh::Server
 		/**
 		 * Handle public-key authentication
 		 */
-		bool auth_pubkey(ssh_session s, char const *u,
-		                 struct ssh_key_struct *pubkey,
-                         char signature_state);
+		int auth_pubkey(ssh_session s, char const *u,
+		                struct ssh_key_struct *pubkey,
+		                char signature_state);
 };
-
-
-static int write_avail_cb(socket_t fd, int revents, void *userdata)
-{
-	int n = 0;
-	Libc::with_libc([&] {
-		char c;
-		n = ::read(fd, &c, sizeof(char));
-	});
-	return n;
-}
-
 
 #endif /* _SSH_TERMINAL_SERVER_H_ */

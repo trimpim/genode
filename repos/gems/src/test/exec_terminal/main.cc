@@ -89,7 +89,7 @@ void Exec_terminal::Main::_handle_exec_terminal_config()
 					xml.attribute("name", "noux");
 					xml.attribute("caps", "500");
 					xml.attribute("version", ++_version);
-					xml.node("resource",[&] () { xml.attribute("name", "RAM"); xml.attribute("quantum", "64M"); });
+					xml.node("resource",[&] () { xml.attribute("name", "RAM"); xml.attribute("quantum", "164M"); });
 					xml.node("config",[&] () {
 						xml.node("fstab",[&] () {
 							xml.node("tar",[&] () { xml.attribute("name", "bash.tar"); });
@@ -99,17 +99,24 @@ void Exec_terminal::Main::_handle_exec_terminal_config()
 								xml.attribute("name", "rw");
 								xml.node("fs",[&] () { xml.attribute("label", "rw"); });
 							});
+							xml.node("dir",[&] () {
+								xml.attribute("name", "tmp");
+								xml.node("ram",[&] () { });
+							});
 						});
 						xml.node("start",[&] () {
 							xml.attribute("name", "/bin/bash");
 							xml.node("env",[&] () {
-								xml.attribute("TERM", "screen");
+								xml.attribute("name", "TERM");
+								xml.attribute("value", "screen");
 							});
 							xml.node("env",[&] () {
-								xml.attribute("HOME", "/");
+								xml.attribute("name", "HOME");
+								xml.attribute("value", "/");
 							});
 							xml.node("env",[&] () {
-								xml.attribute("IGNOREOF", "3");
+								xml.attribute("name", "IGNOREOF");
+								xml.attribute("value", "3");
 							});
 							if (cfg.has_attribute("command")) {
 								Genode::String<128> cmd;
@@ -124,6 +131,11 @@ void Exec_terminal::Main::_handle_exec_terminal_config()
 										xml.attribute("value", Genode::String<136>(cmd, " ; true"));
 									});
 								}
+							} else {
+								xml.node("env",[&] () {
+									xml.attribute("name", "PS1");
+									xml.attribute("value", "noux@$PWD> ");
+								});
 							}
 						});
 					});
