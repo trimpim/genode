@@ -23,6 +23,7 @@ proc depot_spec { } {
 	if {[have_spec x86_64]}  { return "x86_64" }
 	if {[have_spec arm_v6]}  { return "arm_v6" }
 	if {[have_spec arm_v7a]} { return "arm_v7a" }
+	if {[have_spec arm_v8a]} { return "arm_v8a" }
 }
 
 
@@ -165,7 +166,7 @@ proc _current_depot_archive_version { type name } {
 	set repo [repository_contains $hash_rel_path]
 
 	if {$repo == ""} {
-		puts stderr "Error: unable to guess version of '$name' archive"
+		puts stderr "Error: recipe for '$type/$name' not found - unable to guess version"
 		exit 1
 	}
 
@@ -481,6 +482,7 @@ proc drivers_nic_pkg { } {
 	if {[have_spec zynq_qemu]}       { return drivers_nic-zynq            }
 	if {[have_spec imx53_qsb]}       { return drivers_nic-imx53_qsb       }
 	if {[have_spec imx6q_sabrelite]} { return drivers_nic-imx6q_sabrelite }
+	if {[have_spec imx7d_sabre]}     { return drivers_nic-imx7d_sabre     }
 
 	puts stderr "drivers_nic package undefined for this build configuration"
 	exit 1

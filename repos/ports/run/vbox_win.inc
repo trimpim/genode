@@ -1,5 +1,6 @@
-# Tested for nova and muen.
-if {(![have_spec nova] && ![have_spec muen])} {
+assert_spec x86
+
+if {(![have_spec nova] && ![have_spec foc])} {
 	puts "Platform is unsupported."
 	exit 0
 }
@@ -143,7 +144,9 @@ if { $use_vms > 1 } {
 	<start name="wm" caps="1000">
 		<resource name="RAM" quantum="32M"/>
 		<binary name="init"/>
-		<provides> <service name="Nitpicker"/> <service name="Report"/> </provides>
+		<provides>
+			<service name="Nitpicker"/> <service name="Report"/> <service name="ROM"/>
+		</provides>
 		<route>
 			<service name="ROM" label="config"> <parent label="wm.config"/> </service>
 			<service name="Nitpicker"> <child name="nitpicker"/> </service>
@@ -286,7 +289,11 @@ append_if [expr !$use_rumpfs] boot_modules " ${raw_image} "
 
 build_boot_image $boot_modules
 
-run_genode_until {\[init -\> vbox.*].*Guest Additions capability report:.*seamless: no, hostWindowMapping: no, graphics: no} 70
+set wait_timeout 70
+if {[have_spec foc]} { set wait_timeout 120 }
+
+run_genode_until {\[init -\> vbox.*].*Guest Additions capability report:.*seamless: no, hostWindowMapping: no, graphics: no} $wait_timeout
+
 # run_genode_until forever 0 [output_spawn_id]
 
 if {$use_rumpfs} {
