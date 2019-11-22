@@ -1,0 +1,6 @@
+_/src/init
+_/src/test-libc_stdin_server
+_/src/test-libc_stdin_client
+_/src/libc
+_/src/vfs
+_/src/posix

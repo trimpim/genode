@@ -1,0 +1,76 @@
+
+create_boot_directory
+
+build {
+	core
+	init
+	timer
+	server/vfs
+	test/libc_stdin_blocking_read/server
+	test/libc_stdin_blocking_read/client
+}
+
+install_config {
+<config>
+	<parent-provides>
+		<service name="CPU"/>
+		<service name="LOG"/>
+		<service name="PD"/>
+		<service name="RM"/>
+		<service name="ROM"/>
+	</parent-provides>
+
+	<default caps="100"/>
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+
+	<start name="timer">
+		<resource name="RAM" quantum="2M"/>
+		<provides>
+			<service name="Timer"/>
+		</provides>
+	</start>
+
+	<start name="server">
+		<binary name="test-libc_stdin_server"/>
+		<resource name="RAM" quantum="2M"/>
+		<provides>
+			<service name="Terminal"/>
+		</provides>
+		<config/>
+	</start>
+
+	<start name="client">
+		<binary name="test-libc_stdin_client"/>
+		<resource name="RAM" quantum="2M"/>
+		<config>
+			<libc stdin="/dev/terminal" stdout="/dev/terminal" stderr="/dev/log" rtc="/dev/rtc"/>
+			<vfs rtc="/dev/rtc">
+				<dir name="dev">
+					<log/> <null/>
+					<inline name="rtc">2000-01-01 00:00</inline>
+					<terminal label="terminal"/>
+				</dir>
+			</vfs>
+		</config>
+	</start>
+</config>
+}
+
+build_boot_image {
+	core
+	init
+	timer
+	ld.lib.so
+	libc.lib.so
+	libm.lib.so
+	posix.lib.so
+	vfs.lib.so
+	test-libc_stdin_server
+	test-libc_stdin_client
+}
+
+append qemu_args " -nographic "
+
+run_genode_until {.*Tests finished} 10
