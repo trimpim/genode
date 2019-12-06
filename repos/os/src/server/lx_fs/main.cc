@@ -23,6 +23,7 @@
 /* local includes */
 #include <directory.h>
 #include <open_node.h>
+#include <inotify.h>
 
 namespace Lx_fs {
 
@@ -49,6 +50,7 @@ class Lx_fs::Session_component : public Session_rpc_object
 		bool                         _writable;
 
 		Signal_handler<Session_component> _process_packet_dispatcher;
+		Inotifier                   &_inotify;
 
 
 		/******************************
@@ -202,14 +204,16 @@ class Lx_fs::Session_component : public Session_rpc_object
 		                  Genode::Env &env,
 		                  char const  *root_dir,
 		                  bool         writable,
-		                  Allocator   &md_alloc)
+		                  Allocator   &md_alloc,
+		                  Inotifier   &inotify)
 		:
 			Session_rpc_object(env.ram().alloc(tx_buf_size), env.rm(), env.ep().rpc_ep()),
 			_env(env),
 			_md_alloc(md_alloc),
 			_root(*new (&_md_alloc) Directory(_md_alloc, root_dir, false)),
 			_writable(writable),
-			_process_packet_dispatcher(env.ep(), *this, &Session_component::_process_packets)
+			_process_packet_dispatcher(env.ep(), *this, &Session_component::_process_packets),
+			_inotify(inotify)
 		{
 			/*
 			 * Register '_process_packets' dispatch function as signal
@@ -250,7 +254,7 @@ class Lx_fs::Session_component : public Session_rpc_object
 				File *file = dir.file(name.string(), mode, create);
 
 				Open_node *open_file =
-					new (_md_alloc) Open_node(*file, _open_node_registry);
+					new (_md_alloc) Open_node(*file, _open_node_registry, _inotify);
 
 				return open_file->id();
 			};
@@ -288,7 +292,7 @@ class Lx_fs::Session_component : public Session_rpc_object
 			Directory *dir = _root.subdir(path_str, create);
 
 			Open_node *open_dir =
-				new (_md_alloc) Open_node(*dir, _open_node_registry);
+				new (_md_alloc) Open_node(*dir, _open_node_registry, _inotify);
 
 			return Dir_handle { open_dir->id().value };
 		}
@@ -302,7 +306,7 @@ class Lx_fs::Session_component : public Session_rpc_object
 			Node *node = _root.node(path_str + 1);
 
 			Open_node *open_node =
-				new (_md_alloc) Open_node(*node, _open_node_registry);
+				new (_md_alloc) Open_node(*node, _open_node_registry, _inotify);
 
 			return open_node->id();
 		}
@@ -397,7 +401,8 @@ class Lx_fs::Root : public Root_component<Session_component>
 
 		Genode::Env &_env;
 
-		Genode::Attached_rom_dataspace _config { _env, "config" };
+		Genode::Attached_rom_dataspace _config  { _env, "config" };
+		Inotifier                      _inotify { };
 
 		static inline bool writeable_from_args(char const *args)
 		{
@@ -486,7 +491,7 @@ class Lx_fs::Root : public Root_component<Session_component>
 
 			try {
 				return new (md_alloc())
-				       Session_component(tx_buf_size, _env, root_dir, writeable, *md_alloc());
+				       Session_component(tx_buf_size, _env, root_dir, writeable, *md_alloc(), _inotify);
 			}
 			catch (Lookup_failed) {
 				Genode::error("session root directory \"", Genode::Cstring(root), "\" "
@@ -501,7 +506,11 @@ class Lx_fs::Root : public Root_component<Session_component>
 		:
 			Root_component<Session_component>(&env.ep().rpc_ep(), &md_alloc),
 			_env(env)
-		{ }
+		{
+			if (_config.xml().attribute_value("notify", false)) {
+				_inotify.construct(_env);
+			}
+		}
 };
 
 

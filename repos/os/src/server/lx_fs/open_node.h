@@ -18,11 +18,16 @@
 #include <file_system/listener.h>
 #include <file_system_session/file_system_session.h>
 
+/* local includes */
+#include "inotify.h"
+
 namespace File_system {
 	/*
- 	 * \param NODE    component-specific node type
- 	 */
+	 * \param NODE    component-specific node type
+	 */
 	template <typename NODE> class Open_node;
+
+	using Lx_fs::Inotifier;
 }
 
 template <typename NODE>
@@ -34,6 +39,7 @@ class File_system::Open_node : public File_system::Node
 
 		NODE                                         &_node;
 		Genode::Constructible<File_system::Listener>  _listener { };
+		Inotifier                                    &_inotify;
 
 		Listener::Version const _version_when_opened = _node.curr_version();
 
@@ -44,13 +50,29 @@ class File_system::Open_node : public File_system::Node
 		 */
 		bool _was_written = false;
 
+		int  _inotify_fd { -1 };
+
 	public:
 
-		Open_node(NODE &node, Genode::Id_space<File_system::Node> &id_space)
-		: _element(*this, id_space), _node(node) { }
+		Open_node(NODE &node,
+		          Genode::Id_space<File_system::Node> &id_space,
+		          Inotifier &inotify)
+		: _element{*this, id_space}, _node{node}, _inotify{inotify}
+		{
+//Genode::warning(__func__,"() :: ",__LINE__,"  >>  ",node.path(),"/",node.name());
+Genode::warning(__func__,"() :: ",__LINE__,"  >>  ",node.name());
+
+			if (_inotify.constructed()) {
+				_inotify_fd = _inotify->add_watch("/home/pirmin/GapFruit/genode/build/linux/bin/lx_fs_notify/test.txt", _listener);
+			}
+		}
 
 		~Open_node()
 		{
+			if (_inotify.constructed()) {
+				_inotify->remove_watch(_inotify_fd);
+			}
+
 			if (_listener.constructed()) {
 				_node.remove_listener(&*_listener);
 				_listener.destruct();
@@ -73,6 +95,7 @@ class File_system::Open_node : public File_system::Node
 		 */
 		void register_notify(File_system::Sink &sink)
 		{
+Genode::warning(__func__,"() :: ",__LINE__);
 			/*
 			 * If there was already a handler registered for the node,
 			 * remove the old handler.
