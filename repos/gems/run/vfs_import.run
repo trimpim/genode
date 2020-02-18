@@ -1,4 +1,4 @@
-build { app/sequence server/vfs lib/vfs/import test/libc }
+build { app/sequence server/vfs server/ram_fs lib/vfs/import test/libc }
 
 create_boot_directory
 
@@ -26,18 +26,42 @@ install_config {
 			<any-service> <any-child/> <parent/> </any-service>
 		</default-route>
 		<default caps="100"/>
+
 		<start name="timer">
 			<resource name="RAM" quantum="1M"/>
 			<provides><service name="Timer"/></provides>
+		</start>
+
+		<start name="ram_fs">
+			<resource name="RAM" quantum="80M"/>
+			<provides>
+				<service name="File_system"/>
+			</provides>
+			<config>
+				<content>
+				</content>
+				<policy label="vfs -> " root="/" writeable="yes"/>
+			</config>
 		</start>
 
 		<start name="vfs">
 			<resource name="RAM" quantum="4M"/>
 			<provides><service name="File_system"/></provides>
 			<config>
-				<vfs> <ram/> </vfs>
+				<vfs>
+					<fs/>
+					<import overwrite="true">
+						<dir name="depot">
+							<tar name="depot.tar" label="depot.tar"/>
+						</dir>
+					</import>
+				</vfs>
 				<default-policy root="/" writeable="yes"/>
 			</config>
+			<route>
+				<service name="File_system"> <child name="ram_fs"/> </service>
+				<any-service> <any-child/> <parent/> </any-service>
+			</route>
 		</start>
 
 		<start name="test" caps="500">
@@ -77,14 +101,24 @@ install_config {
 						<start name="/bin/cat"> <arg value="/fs/link"/> </start>
 					</config>
 				</start>
-
 			</config>
+			<route>
+				<service name="File_system"> <child name="vfs"/> </service>
+				<any-service> <any-child/> <parent/> </any-service>
+			</route>
 		</start>
+
 	</config>
 }
 
-build_boot_image { vfs_import.lib.so libc.lib.so vfs vfs.lib.so sequence }
+exec -ignorestderr dd if=/dev/zero of=bin/data1.bin bs=1M count=6
+exec -ignorestderr dd if=/dev/zero of=bin/data2.bin bs=1M count=2
+exec tar cf bin/depot.tar bin/data1.bin bin/data2.bin
+
+build_boot_image { vfs_import.lib.so libc.lib.so vfs vfs.lib.so sequence depot.tar ram_fs }
 
 append qemu_args " -nographic -serial mon:stdio "
 
 run_genode_until {Hello world!} 30
+
+exec rm bin/data1.bin bin/data2.bin bin/depot.tar
