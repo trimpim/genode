@@ -1,3 +1,5 @@
+REQUIRES = x86
+
 TARGET = lx_init
 
 INITRAMFS = initramfs
