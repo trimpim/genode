@@ -305,6 +305,65 @@ static void test(Genode::Xml_node node)
 }
 
 
+static void test_limit(Genode::Xml_node const &config)
+{
+	using Name = Genode::String<64>;
+
+	bool    run_test { false };
+	ssize_t limit    { 0 };
+	Name    dir_name { };
+
+	config.sub_node("vfs").for_each_sub_node([&] (Genode::Xml_node& node) {
+		if (node.has_type("dir") &&
+		    node.attribute_value("name", Name { }) == "limited") {
+
+			run_test = true;
+			limit    = node.sub_node("ram").attribute_value("limit", Genode::Number_of_bytes { });
+			dir_name = node.attribute_value("name", Name {} );
+		}
+	});
+
+	if (!run_test) {
+		return;
+	}
+
+	char buf[2048];
+	int  fd        { -1 };
+	int  count     { -1 };
+	int  ret       { -1 };
+	Name file_name { "/", dir_name, "/test" };
+
+	memset(buf, 0xa55a, sizeof(buf)/sizeof(int));
+
+	// write to a file in chunks
+	ssize_t const chunk_size { limit / 2 };
+	CALL_AND_CHECK(fd, open(file_name.string(), O_CREAT | O_WRONLY), fd >= 0, "write multiple chunks");
+	CALL_AND_CHECK(count, write(fd, buf, chunk_size), count==chunk_size, "");
+	CALL_AND_CHECK(count, write(fd, buf, chunk_size), count==chunk_size, "");
+	CALL_AND_CHECK(count, write(fd, buf, chunk_size), errno==EIO, "");
+	CALL_AND_CHECK(ret, close(fd), ret == 0, "");
+
+	// remove file frees up used limit of file
+	CALL_AND_CHECK(ret, unlink(file_name.string()), (ret == 0), "unlink");
+
+	// write file in one go
+	ssize_t const over_limit { limit + 1 };
+	CALL_AND_CHECK(fd, open(file_name.string(), O_CREAT | O_WRONLY), fd >= 0, "one large write");
+	CALL_AND_CHECK(count, write(fd, buf, over_limit), errno==EIO, "");
+	CALL_AND_CHECK(ret, close(fd), ret == 0, "");
+
+	// truncate and re append to file
+	ssize_t const delta          { 13 };
+	ssize_t const nearly_full    { limit - delta };
+	ssize_t const truncated_size { 256 };
+	CALL_AND_CHECK(fd, open(file_name.string(), O_CREAT | O_WRONLY), fd >= 0, "truncate re append");
+	CALL_AND_CHECK(count, write(fd, buf, nearly_full), count==nearly_full, "");
+	CALL_AND_CHECK(ret, ftruncate(fd, truncated_size), ret == 0, "");
+	CALL_AND_CHECK(count, write(fd, buf, limit-truncated_size), count==limit-truncated_size, "");
+	CALL_AND_CHECK(ret, close(fd), ret == 0, "");
+}
+
+
 struct Main
 {
 	Main(Genode::Env &env)
@@ -315,6 +374,8 @@ struct Main
 
 			test(config_rom.xml());
 			test_write_read(config_rom.xml());
+
+			test_limit(config_rom.xml());
 
 			printf("test finished\n");
 		});
