@@ -1,0 +1,35 @@
+<runtime ram="32M" caps="1000" binary="init">
+
+	<events>
+		<timeout meaning="failed" sec="30" />
+		<log meaning="succeeded">Test success</log>
+		<log meaning="failed">Error: </log>
+	</events>
+
+	<content>
+		<rom label="ld.lib.so"/>
+		<rom label="vfs.lib.so"/>
+		<rom label="test-ram_fs_limit"/>
+	</content>
+
+	<config>
+		<parent-provides>
+			<service name="ROM"/>
+			<service name="PD"/>
+			<service name="RM"/>
+			<service name="CPU"/>
+			<service name="LOG"/>
+		</parent-provides>
+		<start name="test-ram_fs_limit" caps="100">
+			<resource name="RAM" quantum="4M"/>
+			<route>
+				<any-service> <parent/> </any-service>
+			</route>
+			<config>
+				<vfs>
+					<dir name="data"> <ram limit="1K"/> </dir>
+				</vfs>
+			</config>
+		</start>
+	</config>
+</runtime>
