@@ -504,8 +504,10 @@ class Vfs::Ram_file_system : public Vfs::File_system
 
 		friend class Genode::List<Vfs_ram::Watch_handle>;
 
-		Vfs::Env           &_env;
-		Vfs_ram::Directory  _root = { "" };
+		Vfs::Env                 &_env;
+		Vfs_ram::Directory        _root          { "" };
+		Genode::Number_of_bytes   _size_limit    { 0UL };
+		Vfs::file_size            _bytes_written { 0UL };
 
 		Vfs_ram::Node *lookup(char const *path, bool return_parent = false)
 		{
@@ -569,7 +571,14 @@ class Vfs::Ram_file_system : public Vfs::File_system
 
 	public:
 
-		Ram_file_system(Vfs::Env &env, Genode::Xml_node) : _env(env) { }
+		Ram_file_system(Vfs::Env &env, Genode::Xml_node config) : _env(env)
+		{
+			_size_limit = config.attribute_value("limit", Genode::Number_of_bytes { });
+			if (_size_limit > _env.env().pd().avail_ram().value) {
+				Genode::warning("limit ", _size_limit,
+				                " is greater than the available RAM.");
+			}
+		}
 
 		~Ram_file_system() { _root.empty(_env.alloc()); }
 
@@ -890,6 +899,10 @@ class Vfs::Ram_file_system : public Vfs::File_system
 			node->notify();
 			parent->notify();
 			remove(node);
+
+			// update accounting for limit check
+			_bytes_written -= node->length();
+
 			return UNLINK_OK;
 		}
 
@@ -966,8 +979,17 @@ class Vfs::Ram_file_system : public Vfs::File_system
 		                   char const *buf, file_size len,
 		                   Vfs::file_size &out) override
 		{
-			if ((vfs_handle->status_flags() & OPEN_MODE_ACCMODE) ==  OPEN_MODE_RDONLY)
+			if ((vfs_handle->status_flags() & OPEN_MODE_ACCMODE) ==  OPEN_MODE_RDONLY) {
 				return WRITE_ERR_INVALID;
+			}
+
+			if (_size_limit && (len > _size_limit)) {
+				return WRITE_ERR_IO;
+			}
+
+			if (_size_limit && _bytes_written+len > _size_limit) {
+				return WRITE_ERR_IO;
+			}
 
 			Vfs_ram::Io_handle *handle =
 				static_cast<Vfs_ram::Io_handle *>(vfs_handle);
@@ -975,6 +997,9 @@ class Vfs::Ram_file_system : public Vfs::File_system
 			Vfs_ram::Node::Guard guard(&handle->node);
 			out = handle->node.write(buf, len, handle->seek());
 			handle->modifying = true;
+
+			// update accounting for limit check
+			_bytes_written += len;
 
 			return WRITE_OK;
 		}
@@ -1004,8 +1029,13 @@ class Vfs::Ram_file_system : public Vfs::File_system
 
 			Vfs_ram::Node::Guard guard(&handle->node);
 
+			Vfs::file_size old_length { handle->node.length() };
 			try { handle->node.truncate(len); }
 			catch (Vfs_ram::Out_of_memory) { return FTRUNCATE_ERR_NO_SPACE; }
+
+			// update accounting for limit check
+			_bytes_written -= (old_length - len);
+
 			return FTRUNCATE_OK;
 		}
 
