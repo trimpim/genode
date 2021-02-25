@@ -1,0 +1,189 @@
+
+
+create_boot_directory
+
+import_from_depot [depot_user]/src/[base_src]
+import_from_depot [depot_user]/src/chroot
+import_from_depot [depot_user]/src/dynamic_rom
+import_from_depot [depot_user]/src/init
+import_from_depot [depot_user]/src/report_rom
+import_from_depot [depot_user]/src/vfs
+
+set test_cfg {
+<config>
+	<parent-provides>
+		<service name="ROM"/>
+		<service name="LOG"/>
+		<service name="RM"/>
+		<service name="CPU"/>
+		<service name="PD"/>
+		<service name="Timer"/>
+		<service name="File_system"/>
+	</parent-provides>
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+	<default caps="100"/>
+	<!-- this causes a capability leak -->
+	<!-- start comment out for stable caps -->
+	<start name="chroot">
+		<resource name="RAM" quantum="1M"/>
+		<provides> <service name="File_system"/> </provides>
+		<config>
+			<default-policy writeable="no"/>
+		</config>
+	</start>
+	<!-- end comment out for stable caps -->
+</config>
+}
+
+set cfg1 {
+<config verbose="no">
+	<parent-provides>
+		<service name="ROM"/>
+		<service name="LOG"/>
+		<service name="RM"/>
+		<service name="CPU"/>
+		<service name="PD"/>
+		<service name="Timer"/>
+		<service name="File_system"/>
+	</parent-provides>
+	<default-route>
+		<any-service> <any-child/> <parent/> </any-service>
+	</default-route>
+	<default caps="100"/>
+	<report buffer="32K"
+	    delay_ms="2000"
+	    init_caps="yes"/>
+	<start name="chroot">
+		<resource name="RAM" quantum="1M"/>
+		<provides> <service name="File_system"/> </provides>
+		<config>
+			<default-policy writeable="no"/>
+		</config>
+	</start>
+	<start name="test_1" caps="180">
+		<binary name="init"/>
+		<resource name="RAM" quantum="40M"/>}
+append cfg1 $test_cfg
+append cfg1 {</start>
+</config>
+}
+
+set cfg2 {
+<config verbose="no">
+	<parent-provides>
+		<service name="ROM"/>
+		<service name="LOG"/>
+		<service name="RM"/>
+		<service name="CPU"/>
+		<service name="PD"/>
+		<service name="Timer"/>
+		<service name="File_system"/>
+	</parent-provides>
+	<default-route>
+		<any-service> <any-child/> <parent/> </any-service>
+	</default-route>
+	<default caps="100"/>
+	<report buffer="32K"
+	    delay_ms="2000"
+	    init_caps="yes"/>
+	<start name="chroot" caps="100">
+		<resource name="RAM" quantum="1M"/>
+		<provides> <service name="File_system"/> </provides>
+		<config>
+			<default-policy writeable="no"/>
+		</config>
+	</start>
+	<start name="test_1" caps="180">
+		<binary name="init"/>
+		<resource name="RAM" quantum="40M"/>}
+append cfg2 $test_cfg
+append cfg2 {</start>
+	<start name="test_2" caps="180">
+		<binary name="init"/>
+		<resource name="RAM" quantum="40M"/>}
+append cfg2 $test_cfg
+append cfg2 {</start>
+</config>
+}
+
+set config {
+	<config verbose="no">
+		<parent-provides>
+			<service name="ROM"/>
+			<service name="LOG"/>
+			<service name="RM"/>
+			<service name="CPU"/>
+			<service name="PD"/>
+		</parent-provides>
+
+		<default-route>
+			<any-service> <parent/> <any-child/> </any-service>
+		</default-route>
+
+		<default caps="100"/>
+
+		<start name="timer">
+			<resource name="RAM" quantum="1M"/>
+			<provides> <service name="Timer"/> </provides>
+		</start>
+
+		<start name="report_rom">
+			<resource name="RAM" quantum="4M"/>
+			<provides>
+				<service name="ROM"/>
+				<service name="Report"/>
+			</provides>
+			<config verbose="yes">
+				<policy label="null" report="init -> state"/>
+			</config>
+		</start>
+
+		<start name="dynamic_rom">
+			<resource name="RAM" quantum="240M"/>
+			<provides> <service name="ROM"/> </provides>
+			<config>
+				<rom name="config">
+					<inline>}
+append config $cfg1
+append config {</inline>
+					<sleep milliseconds="500"/>
+					<inline>}
+append config $cfg2
+append config {</inline>
+					<sleep milliseconds="500"/>
+				</rom>
+			</config>
+		</start>
+
+		<start name="vfs" caps="150">
+			<resource name="RAM" quantum="4M"/>
+			<provides>
+				<service name="File_system"/>
+			</provides>
+			<config>
+				<vfs>
+					<ram/>
+				</vfs>
+				<default-policy root="/" writeable="no"/>
+			</config>
+		</start>
+
+		<start name="init" caps="700">
+			<resource name="RAM" quantum="340M"/>
+			<route>
+				<service name="ROM" label="config"> <child name="dynamic_rom"/> </service>
+				<any-service> <parent/> <any-child/> </any-service>
+			</route>
+		</start>
+	</config>
+}
+
+install_config $config
+
+build_boot_image { apps configs }
+
+append qemu_args " -m 512 -nographic "
+
+run_genode_until forever
