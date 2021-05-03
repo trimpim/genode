@@ -33,29 +33,119 @@ namespace Lx_fs
 		STACK_SIZE     = 8 * 1024,
 		EVENT_SIZE     = (sizeof (struct inotify_event)),
 		EVENT_BUF_LEN  = (1024 * (EVENT_SIZE + NAME_MAX + 1)),
-		PARALELL_NOTIFICATIONS = 4,
+		PARALLEL_NOTIFICATIONS = 4,
 	};
 }
 
 
-bool Lx_fs::Notifier::_watched(char const *path)
+/* do not leak internal function in to global namespace */
+namespace
 {
-	for (Entry *e=_watched_nodes.first(); e!=nullptr; e=e->next()) {
-		if (e->path == path) return true;
+	using namespace Lx_fs;
+
+	template <typename T, typename Allocator>
+	T *remove_from_list(Genode::List<T> &list, T *node, Allocator &alloc)
+	{
+		T *next { node->next() };
+		list.remove(node);
+		destroy(alloc, node);
+		return next;
+	}
+
+
+	bool is_dir(char const *path)
+	{
+		struct stat s;
+		int ret = lstat(path, &s);
+		if (ret == -1)
+			return false;
+
+		if (S_ISDIR(s.st_mode))
+			return true;
+
+		return false;
+	}
+
+
+	Path_string get_directory(Path_string const &path)
+	{
+		Path_string directory;
+		if (is_dir(path.string())) {
+			// make sure there is a '/' at the end of the path
+			if (path.string()[path.length() - 2] == '/')
+				directory = path;
+			else
+				directory = Path_string { path, '/' };
+		} else {
+			size_t pos = 0;
+			for (size_t i = 0; i < path.length() - 1; ++i) {
+				if (path.string()[i] == '/')
+					pos = i;
+			}
+			directory = Genode::Cstring { path.string(), pos + 1 };
+		}
+
+		return directory;
+	}
+
+
+	Path_string get_filename(Path_string const &path)
+	{
+		Path_string filename;
+		if (is_dir(path.string()))
+			return { };
+
+		size_t pos = 0;
+		for (size_t i = 0; i < path.length() - 1; ++i) {
+			if (path.string()[i] == '/')
+				pos = i;
+		}
+
+		// if '/' is the last symbol we do not need a filename
+		if (pos != path.length() - 2)
+			filename = Genode::Cstring { path.string() + pos + 1 };
+
+		return filename;
+	}
+
+}  /* anonymous namespace */
+
+
+Lx_fs::Os_path::Os_path(const char *fullname)
+:
+	full_path { fullname },
+	directory { get_directory(full_path) },
+	filename  { get_filename(full_path) }
+{ }
+
+
+bool Lx_fs::Notifier::_watched(char const *path) const
+{
+	for (Entry const *e = _watched_nodes.first(); e != nullptr; e = e->next()) {
+		if (e->path.full_path == path)
+			return true;
 	}
 
 	return false;
 }
 
 
-void Lx_fs::Notifier::_add_to_watched(char const *path)
+void Lx_fs::Notifier::_add_to_watched(char const *fullname)
 {
-	auto watch_fd { inotify_add_watch(_fd, path,
-	                                  IN_MODIFY | IN_CREATE | IN_DELETE) };
+	Os_path path { fullname };
+	for (Entry *e = _watched_nodes.first(); e != nullptr; e = e->next()) {
+		if (e->path.directory == path.directory) {
+			Entry *elem { new (_heap) Entry { e->watch_fd, path } };
+			_watched_nodes.insert(elem);
+			return;
+		}
+	}
+
+	auto watch_fd { inotify_add_watch(_fd, path.directory.string(),
+	                                  IN_CREATE | IN_DELETE | IN_CLOSE_WRITE) };
 
 	if (watch_fd > 0) {
 		Entry *elem { new (_heap) Entry { watch_fd, path } };
-
 		_watched_nodes.insert(elem);
 	}
 }
@@ -63,20 +153,15 @@ void Lx_fs::Notifier::_add_to_watched(char const *path)
 
 int Lx_fs::Notifier::_add_cap(char const *path, Signal_context_capability cap)
 {
-	int wd { -1 };
-	auto add_fn = [&cap, &path, &wd, this] (Entry &elem) {
-		if (elem.path == path) {
+	for (Entry *e = _watched_nodes.first(); e != nullptr; e = e->next()) {
+		if (e->path.full_path == path) {
 			Cap_entry *c { new (_heap) Cap_entry { cap } };
-			elem.add_capabilty(c);
-			wd = elem.watch_fd;
+			e->add_capabilty(c);
+			return e->watch_fd;
 		}
 	};
 
-	for_each(add_fn);
-
-	if(wd == -1) throw File_system::Lookup_failed { };
-
-	return wd;
+	throw File_system::Lookup_failed { };
 }
 
 
@@ -104,6 +189,7 @@ void Lx_fs::Notifier::_add_notify(Signal_context_capability cap)
 
 void Lx_fs::Notifier::_process_notify()
 {
+	Mutex::Guard guard { _notify_queue_mutex };
 	_notify_timer_running = false;
 
 	/**
@@ -112,15 +198,10 @@ void Lx_fs::Notifier::_process_notify()
 	 * File_system session.
 	 */
 	int cnt { 0 };
-	auto *e = _notify_queue.first();
-	while ((e != nullptr) && (cnt < PARALELL_NOTIFICATIONS)) {
+	Cap_entry *e { _notify_queue.first() };
+	for (; e != nullptr && cnt < PARALLEL_NOTIFICATIONS; ++cnt) {
 		Signal_transmitter {e->cap}.submit();
-		++cnt;
-
-		auto *tmp = e;
-		e = e->next();
-		_notify_queue.remove(tmp);
-		destroy(_heap, tmp);
+		e = remove_from_list(_notify_queue, e, _heap);
 	}
 
 	if (_notify_queue.first() != nullptr) {
@@ -148,52 +229,65 @@ Lx_fs::Notifier::Notifier(Env &env)
 
 Lx_fs::Notifier::~Notifier()
 {
-	Entry *e { _watched_nodes.first() };
-	while (e != nullptr) {
-		Entry *r = e;
-		e = e->next();
+	/* do not notify the elements */
+	for (auto *e = _notify_queue.first(); e != nullptr; ) {
+		e = remove_from_list(_notify_queue, e, _heap);
+	}
 
-
-		r->remove_all(_heap, [ ] (Signal_context_capability cap) {
-			Signal_transmitter {cap}.submit();
-		});
-
-		_watched_nodes.remove(r);
-
-		destroy(_heap, r);
+	for (auto *e = _watched_nodes.first(); e != nullptr; ) {
+		e = remove_from_list(_watched_nodes, e, _heap);
 	}
 
 	close(_fd);
 }
 
 
+Lx_fs::Notifier::Entry *Lx_fs::Notifier::_remove_node(Entry *node)
+{
+	int    watch_fd   { node->watch_fd };
+	Entry *next       { remove_from_list(_watched_nodes, node, _heap) };
+	bool   nodes_left { false };
+
+	Entry const *e { _watched_nodes.first() };
+	for (; e != nullptr && !nodes_left; e = e->next()) {
+		nodes_left = e->watch_fd == watch_fd;
+	}
+
+	if (!nodes_left) {
+		inotify_rm_watch(_fd, watch_fd);
+	}
+
+	return next;
+}
+
+
+void Lx_fs::Notifier::_handle_modify_file(inotify_event *event)
+{
+	for (Entry *e = _watched_nodes.first(); e != nullptr; e = e->next()) {
+		if (e->watch_fd == event->wd && (e->path.filename == event->name || e->path.is_dir())) {
+			e->notify_all([this] (Signal_context_capability cap) {
+				_add_notify(cap);
+			});
+		}
+	}
+}
+
+
+void Lx_fs::Notifier::_remove_empty_watches()
+{
+	for (Entry *e = _watched_nodes.first(); e != nullptr; ) {
+		if (e->empty()) {
+			e = _remove_node(e);
+		} else {
+			e = e->next();
+		}
+	}
+}
+
+
 void Lx_fs::Notifier::entry()
 {
 	struct inotify_event *event { nullptr };
-
-	auto modify_fn = [&event, this] (Entry &elem) {
-		if (elem.watch_fd == event->wd) {
-
-			elem.notify_all([this] (Signal_context_capability cap) {
-				_add_notify(cap);
-			});
-		}
-	};
-
-	auto ignore_fn = [&event, this] (Entry &elem) {
-
-		if (elem.watch_fd == event->wd) {
-
-			elem.remove_all(_heap, [this] (Signal_context_capability cap) {
-				_add_notify(cap);
-			});
-
-			/* remove/free watch entry */
-			inotify_rm_watch(_fd, event->wd);
-			_watched_nodes.remove(&elem);
-			destroy(_heap, &elem);
-		}
-	};
 
 	char buffer[EVENT_BUF_LEN] { 0 };
 	while (true) {
@@ -204,15 +298,19 @@ void Lx_fs::Notifier::entry()
 			event = reinterpret_cast<struct inotify_event*>(&buffer[pos]);
 
 			/* file modified? */
-			if ((event->mask & IN_MODIFY) && !(event->mask & IN_ISDIR)) {
+			if (event->mask & IN_CLOSE_WRITE) {
 				Mutex::Guard guard { _watched_nodes_mutex };
-				for_each(modify_fn);
+				_handle_modify_file(event);
 			}
 
 			/* watch descriptor no longer watched */
-			else if (event->mask & IN_IGNORED) {
+			else if (event->mask & IN_DELETE) {
 				Mutex::Guard guard { _watched_nodes_mutex };
-				for_each(ignore_fn);
+				_handle_modify_file(event);
+			}
+
+			else if (event->mask & IN_Q_OVERFLOW) {
+				Genode::error("Linux event queue overflow");
 			}
 
 			pos += EVENT_SIZE + event->len;
@@ -235,26 +333,28 @@ int Lx_fs::Notifier::add_watch(const char* path, Signal_context_capability cap)
 
 void Lx_fs::Notifier::remove_watch(char const *path, Signal_context_capability cap)
 {
-	Mutex::Guard guard { _watched_nodes_mutex };
-
-	auto remove_fn = [&cap, &path, this] (Entry &elem) {
-		if (elem.path == path) {
-
-			elem.remove_capability(_heap, cap);
-		}
-	};
-
-	auto *e { _notify_queue.first() };
-	while (e != nullptr) {
-
-		if (e->cap == cap) {
-			auto *tmp { e };
-			e = e->next();
-			_notify_queue.remove(tmp);
-		} else {
-			e = e->next();
+	{
+		Mutex::Guard  guard { _notify_queue_mutex };
+		auto         *e     { _notify_queue.first() };
+		while (e != nullptr) {
+			if (e->cap == cap) {
+				auto *tmp { e };
+				e = e->next();
+				_notify_queue.remove(tmp);
+				destroy(_heap, tmp);
+			} else {
+				e = e->next();
+			}
 		}
 	}
 
-	for_each(remove_fn);
+	Mutex::Guard guard { _watched_nodes_mutex };
+
+	for (Entry *e = _watched_nodes.first(); e != nullptr; e = e->next()) {
+		if (e->path.full_path == path) {
+			e->remove_capability(_heap, cap);
+		}
+	}
+
+	_remove_empty_watches();
 }

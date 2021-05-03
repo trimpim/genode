@@ -70,11 +70,10 @@ class Lx_fs::Watch_node final : public Lx_fs::Node,
 
 		unsigned long _inode(char const *path)
 		{
-			struct stat s { };
-			int ret { stat(path, &s) };
-			if (ret == -1) {
+			struct stat s   { };
+			int         ret { lstat(path, &s) };
+			if (ret == -1)
 				throw Lookup_failed();
-			}
 
 			return s.st_ino;
 		}

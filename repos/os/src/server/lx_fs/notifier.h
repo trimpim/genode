@@ -23,8 +23,12 @@
 #include <base/signal.h>
 #include <base/thread.h>
 #include <file_system/listener.h>
+#include <os/path.h>
 #include <timer_session/connection.h>
 #include <util/list.h>
+
+/* libc includes */
+#include <sys/inotify.h>
 
 /* local includes */
 #include "lx_util.h"
@@ -34,10 +38,29 @@ namespace Lx_fs
 {
 	using namespace Genode;
 
+	using Path_string = Genode::String<File_system::MAX_PATH_LEN>;
+
 	class Init_notify_failed : public Genode::Exception { };
+
+	enum { MAX_PATH_SIZE = 1024 };
+	struct Os_path;
 
 	class Notifier;
 }
+
+/*
+ * full_path is always a concatenation of directory and filename
+ */
+struct Lx_fs::Os_path
+{
+	Path_string const full_path;
+	Path_string const directory;    /* always ends with '/' */
+	Path_string const filename;
+
+	Os_path(char const *path);
+
+	bool is_dir() const { return filename.length() == 0; }
+};
 
 
 class Lx_fs::Notifier final : public Thread
@@ -59,15 +82,17 @@ class Lx_fs::Notifier final : public Thread
 
 			public:
 
-				int const         watch_fd;
-				Path_string const path;
+				int const     watch_fd;
+				Os_path const path;
 
-				Entry(int const watch_fd, char const *path)
+				Entry(int const watch_fd, Os_path const &path)
 				:
 					watch_fd { watch_fd }, path { path }
 				{ }
 
 				~Entry() = default;
+
+				bool empty() const { return _caps.first() == nullptr; }
 
 				void add_capabilty(Cap_entry *cap_entry)
 				{
@@ -79,18 +104,6 @@ class Lx_fs::Notifier final : public Thread
 				{
 					for (Cap_entry *e=_caps.first(); e!=nullptr; e=e->next()) {
 						fn(e->cap);
-					}
-				}
-
-				template <typename FN>
-				void remove_all(Allocator &alloc, FN const &fn)
-				{
-					for (Cap_entry *e=_caps.first(); e!=nullptr; ) {
-						fn(e->cap);
-						auto *d { e };
-						e=e->next();
-						_caps.remove(d);
-						destroy(alloc, d);
 					}
 				}
 
@@ -123,17 +136,15 @@ class Lx_fs::Notifier final : public Thread
 		void _add_notify(Signal_context_capability cap);
 		void _process_notify();
 
-		template <typename FN>
-		void for_each(FN &fn)
-		{
-			for (Entry *e=_watched_nodes.first(); e!=nullptr; e=e->next()) {
-				fn(*e);
-			}
-		}
+		void _handle_removed_file(inotify_event *event);
+		void _handle_modify_file(inotify_event *event);
+		void _remove_empty_watches();
+		void _print_watches_list();
 
-		bool _watched(char const *path);
+		bool _watched(char const *path) const;
 		void _add_to_watched(char const *path);
 		int _add_cap(char const *path, Signal_context_capability cap);
+		Entry *_remove_node(Entry *node);
 
 	public:
 
