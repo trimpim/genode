@@ -1,3 +1,4 @@
+assert_spec linux
 
 set depot_archives { }
 set build_components { }
