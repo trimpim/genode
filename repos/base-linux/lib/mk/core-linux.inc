@@ -1,6 +1,6 @@
 GEN_CORE_DIR := $(BASE_DIR)/src/core
-
 LIBS         := syscall-linux
+BOARD        ?= unknown
 
 SRC_CC       := main.cc \
                 platform.cc \
