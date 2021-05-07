@@ -82,18 +82,14 @@ int Lx_fs::Notifier::_add_cap(char const *path, Signal_context_capability cap)
 
 void Lx_fs::Notifier::_add_notify(Signal_context_capability cap)
 {
-	{
-		Mutex::Guard guard { _notify_queue_mutex };
-
-		for (auto const *e = _notify_queue.first(); e != nullptr; e = e->next()) {
-			if (e->cap == cap) {
-				return;
-			}
+	for (auto const *e = _notify_queue.first(); e != nullptr; e = e->next()) {
+		if (e->cap == cap) {
+			return;
 		}
-
-		auto *entry { new (_heap) Cap_entry { cap } };
-		_notify_queue.insert(entry);
 	}
+
+	auto *entry { new (_heap) Cap_entry { cap } };
+	_notify_queue.insert(entry);
 
 	if (!_notify_timer_running) {
 		_notify_timer_running = true;
@@ -120,7 +116,6 @@ void Lx_fs::Notifier::_process_notify()
 		auto *tmp = e;
 		e = e->next();
 		_notify_queue.remove(tmp);
-		destroy(_heap, tmp);
 	}
 
 	if (_notify_queue.first() != nullptr) {
@@ -135,7 +130,6 @@ Lx_fs::Notifier::Notifier(Env &env)
 	Thread { env, "inotify", STACK_SIZE },
 	_env   { env }
 {
-	_notify_timer.sigh(_notify_handler);
 	_fd = inotify_init();
 
 	if (0 > _fd) {
@@ -171,11 +165,10 @@ void Lx_fs::Notifier::entry()
 {
 	struct inotify_event *event { nullptr };
 
-	auto modify_fn = [&event, this] (Entry &elem) {
+	auto modify_fn = [&event] (Entry &elem) {
 		if (elem.watch_fd == event->wd) {
-
-			elem.notify_all([this] (Signal_context_capability cap) {
-				_add_notify(cap);
+			elem.notify_all([ ] (Signal_context_capability cap) {
+				Signal_transmitter {cap}.submit();
 			});
 		}
 	};
@@ -184,8 +177,10 @@ void Lx_fs::Notifier::entry()
 
 		if (elem.watch_fd == event->wd) {
 
-			elem.remove_all(_heap, [this] (Signal_context_capability cap) {
-				_add_notify(cap);
+			elem.remove_all(_heap, [ ] (Signal_context_capability cap) {
+
+				/* notify clients something has changed */
+				Signal_transmitter {cap}.submit();
 			});
 
 			/* remove/free watch entry */
