@@ -343,6 +343,20 @@ namespace Genode
 				struct Counter : Bitfield<0, 16> { };
 			};
 
+			/**
+			 * These two structs help avoiding the following compile errors in
+			 * places where the driver has to convert MAC addresses pointers
+			 * to integer pointers:
+			 *
+			 * error: taking address of packed member of ‘Net::Mac_address’
+			 *        may result in an unaligned pointer value
+			 *
+			 * As the MAC address type is packed and therefore has alignment 1,
+			 * we have to ensure that the pointer type we convert it to also
+			 * has alignment 1, i.e., that it is also packed.
+			 */
+			struct Packed_uint16 { uint16_t value; } __attribute__((packed));
+			struct Packed_uint32 { uint32_t value; } __attribute__((packed));
 
 			class Phy_timeout_for_idle : public Genode::Exception {};
 			class Unkown_ethernet_speed : public Genode::Exception {};
@@ -436,9 +450,6 @@ namespace Genode
 
 			Nic::Mac_address read_mac_address()
 			{
-				struct Packed_uint16 { uint16_t value; } __attribute__((packed));
-				struct Packed_uint32 { uint32_t value; } __attribute__((packed));
-
 				Nic::Mac_address mac;
 				Packed_uint32 * const low_addr_pointer  = reinterpret_cast<Packed_uint32 *>(&mac.addr[0]);
 				Packed_uint16 * const high_addr_pointer = reinterpret_cast<Packed_uint16 *>(&mac.addr[4]);
@@ -679,9 +690,6 @@ namespace Genode
 
 			void write_mac_address(const Nic::Mac_address &mac)
 			{
-				struct Packed_uint16 { uint16_t value; } __attribute__((packed));
-				struct Packed_uint32 { uint32_t value; } __attribute__((packed));
-
 				Packed_uint32 const * const low_addr_pointer  = reinterpret_cast<Packed_uint32 const *>(&mac.addr[0]);
 				Packed_uint16 const * const high_addr_pointer = reinterpret_cast<Packed_uint16 const *>(&mac.addr[4]);
 
