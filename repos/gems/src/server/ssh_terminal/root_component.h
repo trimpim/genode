@@ -56,11 +56,12 @@ class Terminal::Root_component : public Genode::Root_component<Session_component
 			if (!_config_rom.valid()) { return; }
 
 			{
-				Genode::Mutex::Guard guard(_logins.mutex());
+				Util::Pthread_mutex::Guard guard(_logins.mutex());
 				_logins.import(_config_rom.xml());
 			}
 
-			_server.update_config(_config_rom.xml());
+			Libc::with_libc([&] () {
+				_server.update_config(_config_rom.xml()); });
 		}
 
 	protected:
@@ -92,7 +93,7 @@ class Terminal::Root_component : public Genode::Root_component<Session_component
 
 		void _destroy_session(Session_component *s)
 		{
-			_server.detach_terminal(*s);
+			Libc::with_libc([&] () { _server.detach_terminal(*s); });
 			Genode::destroy(md_alloc(), s);
 		}
 
