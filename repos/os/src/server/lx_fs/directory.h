@@ -2,8 +2,6 @@
  * \brief  File-system directory node
  * \author Norman Feske
  * \author Christian Helmuth
- * \author Emery Hemingway
- * \author Sid Hussmann
  * \date   2013-11-11
  */
 
@@ -21,13 +19,12 @@
 #include <file_system/util.h>
 #include <os/path.h>
 
-/* libc includes */
-#include <stdio.h>
-
 /* local includes */
-#include "file.h"
-#include "lx_util.h"
-#include "node.h"
+#include <node.h>
+#include <file.h>
+
+#include <lx_util.h>
+#include <stdio.h>
 
 
 namespace Lx_fs {
@@ -46,6 +43,8 @@ class Lx_fs::Directory : public Node
 		 */
 		Directory(Directory const &);
 		Directory &operator = (Directory const &);
+
+		typedef Genode::Path<MAX_PATH_LEN> Path;
 
 		DIR       *_fd;
 		Path       _path;
@@ -261,11 +260,6 @@ class Lx_fs::Directory : public Node
 				.inode = inode(),
 				.modification_time = { st.st_mtime }
 			};
-		}
-
-		Path path() const override
-		{
-			return _path;
 		}
 };
 
