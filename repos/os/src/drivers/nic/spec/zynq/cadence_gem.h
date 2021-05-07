@@ -436,12 +436,15 @@ namespace Genode
 
 			Nic::Mac_address read_mac_address()
 			{
-				Nic::Mac_address mac;
-				uint32_t* const low_addr_pointer = reinterpret_cast<uint32_t*>(&mac.addr[0]);
-				uint16_t* const high_addr_pointer = reinterpret_cast<uint16_t*>(&mac.addr[4]);
+				struct Packed_uint16 { uint16_t value; } __attribute__((packed));
+				struct Packed_uint32 { uint32_t value; } __attribute__((packed));
 
-				*low_addr_pointer = read<Mac_addr_1::Low_addr>();
-				*high_addr_pointer = read<Mac_addr_1::High_addr>();
+				Nic::Mac_address mac;
+				Packed_uint32 * const low_addr_pointer  = reinterpret_cast<Packed_uint32 *>(&mac.addr[0]);
+				Packed_uint16 * const high_addr_pointer = reinterpret_cast<Packed_uint16 *>(&mac.addr[4]);
+
+				low_addr_pointer->value = read<Mac_addr_1::Low_addr>();
+				high_addr_pointer->value = read<Mac_addr_1::High_addr>();
 
 				return mac;
 			}
