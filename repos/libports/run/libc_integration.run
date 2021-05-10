@@ -87,7 +87,7 @@ append config {
 	</start>
 	<start name="test-libc_integration" caps="400" priority="-1">
 		<resource name="RAM" quantum="256M"/>
-		<config>
+		<config ld_verbose="yes">
 			<libc stdout="/dev/log" stderr="/dev/log" rtc="/dev/rtc" pipe="/dev/pipe"/>
 			<arg value="test-libc_integration"/>
 			<arg value="-wo"/> <arg value="} $config_wo {"/>
