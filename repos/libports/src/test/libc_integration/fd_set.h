@@ -48,7 +48,9 @@ namespace Integration_test
 
 			void remove_fd(int const fd)
 			{
-				_fds.erase(find(_fds.begin(), _fds.end(), fd));
+				auto it = find(_fds.begin(), _fds.end(), fd);
+				if (it != _fds.end())
+					_fds.erase(it);
 			}
 
 			int max_fd()    const { return _max_fd; }
