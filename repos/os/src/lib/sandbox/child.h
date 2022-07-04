@@ -234,6 +234,18 @@ class Sandbox::Child : Child_policy, Routed_service::Wakeup
 		{
 			error("A fault in the pd of child '",name(),"' was detected");
 			_pd_fault_detected = true;
+			_report_update_trigger.trigger_immediate_report_update();
+		}
+
+		bool                                  _monitor_cpu_faults;
+		Constructible<Signal_handler<Child>>  _cpu_fault_handler   { };
+		bool                                  _cpu_fault_detected  { false };
+
+		void handle_cpu_fault()
+		{
+			error("A CPU fault was detected in child '",name(),"'");
+			_cpu_fault_detected = true;
+			_report_update_trigger.trigger_immediate_report_update();
 		}
 
 		/**

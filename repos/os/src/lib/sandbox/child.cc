@@ -378,6 +378,9 @@ void Sandbox::Child::report_state(Xml_generator &xml, Report_detail const &detai
 		if (_pd_fault_detected)
 			xml.attribute("pd_fault", "yes");
 
+		if (_cpu_fault_detected)
+			xml.attribute("cpu_fault", "yes");
+
 		if (detail.child_ram() && _child.pd_session_cap().valid()) {
 			xml.node("ram", [&] () {
 
@@ -510,6 +513,11 @@ void Sandbox::Child::init(Cpu_session &session, Cpu_session_capability cap)
 
 	_cpu_quota_transfer.transfer_cpu_quota(_child.pd_session_cap(), _child.pd(),
 	                                       cap, effective);
+
+	if (_monitor_cpu_faults) {
+		_cpu_fault_handler.construct(_env.ep(), *this, &Child::handle_cpu_fault);
+		session.exception_sigh(*_cpu_fault_handler);
+	}
 }
 
 
@@ -777,6 +785,7 @@ Sandbox::Child::Child(Env                      &env,
 	_name_registry(name_registry),
 	_heartbeat_enabled(start_node.has_sub_node("heartbeat")),
 	_monitor_pd_faults { start_node.has_sub_node("monitor_pd_faults") },
+	_monitor_cpu_faults { start_node.has_sub_node("monitor_cpu_faults") },
 	_resources(_resources_from_start_node(start_node, prio_levels, affinity_space,
 	                                      default_caps_accessor.default_caps())),
 	_pd_intrinsics(pd_intrinsics),
