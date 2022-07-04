@@ -204,6 +204,32 @@ class Sandbox::Child : Child_policy, Routed_service::Wakeup
 			return _heartbeat_enabled && (_state == State::ALIVE);
 		}
 
+		/*
+		 * monitor for faults in the CPU-session
+		 */
+		bool _monitor_cpu_faults;
+		bool _cpu_fault_detected  { false };
+		Constructible<Signal_handler<Child>>  _cpu_fault_handler   { };
+
+		void handle_cpu_fault()
+		{
+			_cpu_fault_detected = true;
+			_report_update_trigger.trigger_immediate_report_update();
+		}
+
+		/*
+		 * monitor for faults in the PD-session
+		 */
+		bool _monitor_pd_faults;
+		bool _pd_fault_detected  { false };
+		Constructible<Signal_handler<Child>>  _pd_fault_handler   { };
+
+		void handle_pd_fault()
+		{
+			_pd_fault_detected = true;
+			_report_update_trigger.trigger_immediate_report_update();
+		}
+
 		/**
 		 * Resources assigned to the child
 		 */

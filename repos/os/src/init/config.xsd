@@ -150,6 +150,8 @@
        </xs:element> <!-- "binary" -->
 
        <xs:element name="heartbeat" />
+       <xs:element name="monitor_pd_faults" />
+       <xs:element name="monitor_cpu_faults" />
 
        <xs:element name="affinity">
         <xs:complexType>
