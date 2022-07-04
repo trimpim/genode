@@ -375,6 +375,9 @@ void Sandbox::Child::report_state(Xml_generator &xml, Report_detail const &detai
 		if (_heartbeat_enabled && _child.skipped_heartbeats())
 			xml.attribute("skipped_heartbeats", _child.skipped_heartbeats());
 
+		if (_pd_fault_detected)
+			xml.attribute("pd_fault", "yes");
+
 		if (detail.child_ram() && _child.pd_session_cap().valid()) {
 			xml.node("ram", [&] () {
 
@@ -483,6 +486,12 @@ void Sandbox::Child::init(Pd_session &session, Pd_session_capability cap)
 		try { intrinsics.ref_pd.transfer_quota(cap, ram_quota); }
 		catch (Out_of_ram) {
 			error(name(), ": unable to initialize RAM quota of PD"); }
+
+		if (_monitor_pd_faults) {
+			_pd_fault_handler.construct(_env.ep(), *this, &Child::handle_pd_fault);
+			Genode::Region_map_client address_space { _pd_accessor.pd().address_space() };
+			address_space.fault_handler(*_pd_fault_handler);
+		}
 	});
 }
 
@@ -767,6 +776,7 @@ Sandbox::Child::Child(Env                      &env,
 	_cpu_quota_transfer(cpu_quota_transfer),
 	_name_registry(name_registry),
 	_heartbeat_enabled(start_node.has_sub_node("heartbeat")),
+	_monitor_pd_faults { start_node.has_sub_node("monitor_pd_faults") },
 	_resources(_resources_from_start_node(start_node, prio_levels, affinity_space,
 	                                      default_caps_accessor.default_caps())),
 	_pd_intrinsics(pd_intrinsics),

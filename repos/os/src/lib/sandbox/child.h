@@ -226,6 +226,16 @@ class Sandbox::Child : Child_policy, Routed_service::Wakeup
 			return _heartbeat_enabled && (_state == State::ALIVE);
 		}
 
+		bool                                  _monitor_pd_faults;
+		Constructible<Signal_handler<Child>>  _pd_fault_handler   { };
+		bool                                  _pd_fault_detected  { false };
+
+		void handle_pd_fault()
+		{
+			error("A fault in the pd of child '",name(),"' was detected");
+			_pd_fault_detected = true;
+		}
+
 		/**
 		 * Resources assigned to the child
 		 */
