@@ -39,7 +39,7 @@ namespace Test_fifo_pipe {
 	static char const*  RECEIVE_FILENAME    { "/dev/receive-pipe/out" };
 
 	/* create a buffer that isn't a multiple of the pipe size */
-	enum { BUF_SIZE = 64 * 1024 + 42 };
+	enum { BUF_SIZE = 16 * 1024 + 42 };
 }
 
 static size_t copy(int src, int dest)
