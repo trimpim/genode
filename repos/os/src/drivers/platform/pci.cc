@@ -263,16 +263,34 @@ bool Driver::pci_device_matches(Session_policy const & policy,
 		if (dev.type() != "pci")
 			return;
 
-		String<16> class_code = node.attribute_value("class", String<16>());
-		vendor_t   vendor_id  = node.attribute_value<vendor_t>("vendor_id", 0);
-		device_t   device_id  = node.attribute_value<device_t>("device_id", 0);
+		if (node.has_attribute("bus") &&
+		    node.has_attribute("device") &&
+		    node.has_attribute("function")) {
 
-		dev.for_pci_config([&] (Device::Pci_config const cfg)
-		{
-			if ((pci_class_code_alias(cfg.class_code) == class_code) ||
-			    (vendor_id == cfg.vendor_id && device_id == cfg.device_id))
-				ret = true;
-		});
+			bus_t  bus_num      { node.attribute_value<bus_t>   ("bus",      0) };
+			dev_t  device_num   { node.attribute_value<dev_t>   ("device",   0) };
+			func_t function_num { node.attribute_value<func_t>  ("function", 0) };
+
+			dev.for_pci_config([&] (Device::Pci_config const cfg)
+			{
+				if ((bus_num == cfg.bus_num) &&
+				    (device_num == cfg.dev_num) &&
+				    (function_num == cfg.func_num))
+					ret = true;
+			});
+		} else {
+
+			String<16> class_code  = node.attribute_value("class", String<16>());
+			vendor_t   vendor_id   = node.attribute_value<vendor_t>("vendor_id", 0);
+			device_t   device_id   = node.attribute_value<device_t>("device_id", 0);
+
+			dev.for_pci_config([&] (Device::Pci_config const cfg)
+			{
+				if ((pci_class_code_alias(cfg.class_code) == class_code) ||
+				    (vendor_id == cfg.vendor_id && device_id == cfg.device_id))
+					ret = true;
+			});
+		}
 	});
 
 	return ret;
