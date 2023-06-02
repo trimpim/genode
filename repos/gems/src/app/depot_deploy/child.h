@@ -109,6 +109,9 @@ class Depot_deploy::Child : public List_model<Child>::Element
 		unsigned long   _pkg_cap_quota { 0 };
 		unsigned long   _pkg_cpu_quota { 0 };
 
+		bool            _pkg_monitor_cpu_faults { false };
+		bool            _pkg_monitor_pd_faults  { false };
+
 		Binary_name _binary_name { };
 		Config_name _config_name { };
 
@@ -225,6 +228,9 @@ class Depot_deploy::Child : public List_model<Child>::Element
 			_pkg_ram_quota = runtime.attribute_value("ram", Number_of_bytes());
 			_pkg_cap_quota = runtime.attribute_value("caps", 0UL);
 			_pkg_cpu_quota = runtime.attribute_value("cpu", 0UL);
+
+			_pkg_monitor_cpu_faults = runtime.has_sub_node("monitor_cpu_faults");
+			_pkg_monitor_pd_faults  = runtime.has_sub_node("monitor_pd_faults");
 
 			_binary_name = runtime.attribute_value("binary", Binary_name());
 			_config_name = runtime.attribute_value("config", Config_name());
@@ -349,7 +355,9 @@ class Depot_deploy::Child : public List_model<Child>::Element
 		                           Prio_levels             prio_levels,
 		                           Affinity::Space         affinity_space,
 		                           Depot_rom_server const &cached_depot_rom,
-		                           Depot_rom_server const &uncached_depot_rom) const;
+		                           Depot_rom_server const &uncached_depot_rom,
+		                           bool             const  monitor_cpu_faults,
+		                           bool             const  monitor_pd_faults) const;
 
 		inline void gen_monitor_policy_node(Xml_generator&) const;
 
@@ -395,7 +403,9 @@ void Depot_deploy::Child::gen_start_node(Xml_generator          &xml,
                                          Prio_levels      const  prio_levels,
                                          Affinity::Space  const  affinity_space,
                                          Depot_rom_server const &cached_depot_rom,
-                                         Depot_rom_server const &uncached_depot_rom) const
+                                         Depot_rom_server const &uncached_depot_rom,
+                                         bool             const  monitor_cpu_faults,
+                                         bool             const  monitor_pd_faults) const
 {
 	if (!_configured() || _condition == UNSATISFIED)
 		return;
@@ -454,6 +464,12 @@ void Depot_deploy::Child::gen_start_node(Xml_generator          &xml,
 		};
 		if (permit_managing_system())
 			xml.attribute("managing_system", "yes");
+
+		if (_pkg_monitor_cpu_faults || monitor_cpu_faults)
+			xml.node("monitor_cpu_faults");
+
+		if (_pkg_monitor_pd_faults || monitor_pd_faults)
+			xml.node("monitor_pd_faults");
 
 		bool shim_reroute = false;
 

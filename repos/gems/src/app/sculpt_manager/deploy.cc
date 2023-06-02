@@ -198,7 +198,7 @@ void Sculpt::Deploy::gen_runtime_start_nodes(Xml_generator  &xml,
 		if (managed_deploy.has_sub_node("common_routes")) {
 			_children.gen_start_nodes(xml, managed_deploy.sub_node("common_routes"),
 			                          prio_levels, affinity_space,
-			                          "depot_rom", "dynamic_depot_rom");
+			                          "depot_rom", "dynamic_depot_rom", false, false);
 			xml.node("monitor", [&] {
 				_children.gen_monitor_policy_nodes(xml);});
 		}

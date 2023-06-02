@@ -185,12 +185,15 @@ struct Depot_deploy::Main
 			});
 		});
 
+		bool const monitor_cpu_faults { config.has_sub_node("monitor_cpu_faults") };
+		bool const monitor_pd_faults  { config.has_sub_node("monitor_pd_faults") };
+
 		config.with_sub_node("common_routes",
 			[&] (Xml_node node) {
 				Child::Depot_rom_server const parent { };
 				_children.gen_start_nodes(xml, node,
 				                          _prio_levels, Affinity::Space(1, 1),
-				                          parent, parent);
+				                          parent, parent, monitor_cpu_faults, monitor_pd_faults);
 			},
 			[&] { warning("config lacks <common_routes> node"); });
 	}

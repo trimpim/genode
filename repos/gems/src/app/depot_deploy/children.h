@@ -131,11 +131,14 @@ class Depot_deploy::Children
 		                     Child::Prio_levels prio_levels,
 		                     Affinity::Space affinity_space,
 		                     Child::Depot_rom_server const &cached_depot_rom,
-		                     Child::Depot_rom_server const &uncached_depot_rom) const
+		                     Child::Depot_rom_server const &uncached_depot_rom,
+		                     bool                    const  monitor_cpu_faults,
+		                     bool                    const  monitor_pd_faults) const
 		{
 			_children.for_each([&] (Child const &child) {
 				child.gen_start_node(xml, common, prio_levels, affinity_space,
-				                     cached_depot_rom, uncached_depot_rom); });
+				                     cached_depot_rom, uncached_depot_rom,
+				                     monitor_cpu_faults, monitor_pd_faults); });
 		}
 
 		void gen_monitor_policy_nodes(Xml_generator &xml) const
