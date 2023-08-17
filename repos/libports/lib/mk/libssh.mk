@@ -73,6 +73,7 @@ INC_DIR += $(LIBSSH_PORT_DIR)/include
 INC_DIR += $(REP_DIR)/src/lib/libssh
 
 CC_OPT += -DHAVE_CONFIG_H
+CC_OPT += -Wno-deprecated-declarations -Wno-format-overflow -Wno-array-parameter
 
 LIBS += libc zlib libcrypto
 
