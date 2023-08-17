@@ -16,6 +16,8 @@
 
 
 unsigned int OPENSSL_armcap_P = 0;
+unsigned int OPENSSL_armv8_rsa_neonized = 0;
+unsigned int OPENSSL_arm_midr = 0;
 
 void OPENSSL_cpuid_setup(void) { }
 

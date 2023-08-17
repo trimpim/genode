@@ -1,0 +1,188 @@
+set depot_archives   { }
+set build_components { }
+
+set is_autopilot [get_cmd_switch --autopilot]
+
+lappend depot_archives [depot_user]/src/[base_src]
+lappend depot_archives [depot_user]/src/init
+lappend depot_archives [depot_user]/src/libc
+lappend depot_archives [depot_user]/src/sequence
+lappend depot_archives [depot_user]/src/vfs
+lappend depot_archives [depot_user]/src/vfs_jitterentropy
+
+if { $is_autopilot } {
+	lappend depot_archives [depot_user]/src/openssl
+	lappend depot_archives [depot_user]/src/posix
+	lappend depot_archives [depot_user]/src/test-openssl
+} else {
+	lappend build_components lib/libcrypto
+	lappend build_components lib/libssl
+	lappend build_components test/openssl/bntest
+	lappend build_components test/openssl/constant_time_test
+	lappend build_components test/openssl/hexstr_test
+	lappend build_components test/openssl/pkcs7_test
+	lappend build_components test/openssl/rand_status_test
+	lappend build_components test/openssl/rsa_test
+	lappend build_components test/openssl/x509_time_test
+}
+
+set config {
+<config>
+	<parent-provides>
+		<service name="CPU"/>
+		<service name="LOG"/>
+		<service name="PD"/>
+		<service name="RM"/>
+		<service name="ROM"/>
+	</parent-provides>
+
+	<default-route>
+		<any-service> <parent/> </any-service>
+	</default-route>
+
+	<start name="timer" caps="100">
+		<resource name="RAM" quantum="1M"/>
+		<provides>
+			<service name="Timer"/>
+		</provides>
+	</start>
+
+	<start name="test-openssl" caps="1000">
+		<resource name="RAM" quantum="10M"/>
+		<binary name="sequence"/>
+		<config>
+			<start name="test-bntest">
+				<config>
+					<libc stdin="/dev/null" stdout="/dev/log" stderr="/dev/log"
+					      rtc="/dev/rtc" rng="/dev/random"/>
+					<vfs>
+						<dir name="dev">
+							<log/>
+							<null/>
+							<jitterentropy name="random"/>
+							<inline name="rtc">2023-07-07 00:00:00</inline>
+						</dir>
+					</vfs>
+					<arg value="test-bignumtest"/>
+				</config>
+			</start>
+			<start name="test-constant_time_test">
+				<config>
+					<libc stdin="/dev/null" stdout="/dev/log" stderr="/dev/log"
+					      rtc="/dev/rtc" rng="/dev/random"/>
+					<vfs>
+						<dir name="dev">
+							<log/>
+							<null/>
+							<jitterentropy name="random"/>
+							<inline name="rtc">2023-07-07 00:00:00</inline>
+						</dir>
+					</vfs>
+					<arg value="test-constant_time_test"/>
+				</config>
+			</start>
+			<start name="test-hexstr_test">
+				<config>
+					<libc stdin="/dev/null" stdout="/dev/log" stderr="/dev/log"
+					      rtc="/dev/rtc" rng="/dev/random"/>
+					<vfs>
+						<dir name="dev">
+							<log/>
+							<null/>
+							<jitterentropy name="random"/>
+							<inline name="rtc">2023-07-07 00:00:00</inline>
+						</dir>
+					</vfs>
+					<arg value="test-constant_time_test"/>
+				</config>
+			</start>
+}
+append_if [have_spec 64bit] config {
+			<!--
+			  - This test only works on 64 bit platforms, as the elliptic curve used
+			  - can not be built on 32 bit machines.
+			-->
+			<start name="test-pkcs7_test">
+				<config>
+					<libc stdin="/dev/null" stdout="/dev/log" stderr="/dev/log"
+					      rtc="/dev/rtc" rng="/dev/random"/>
+					<vfs>
+						<dir name="dev">
+							<log/>
+							<null/>
+							<jitterentropy name="random"/>
+							<inline name="rtc">2023-07-07 00:00:00</inline>
+						</dir>
+					</vfs>
+					<arg value="test-pkcs7_test"/>
+				</config>
+			</start>
+}
+append config {
+			<start name="test-rand_status_test">
+				<config>
+					<libc stdin="/dev/null" stdout="/dev/log" stderr="/dev/log"
+					      rtc="/dev/rtc" rng="/dev/random"/>
+					<vfs>
+						<dir name="dev">
+							<log/>
+							<null/>
+							<jitterentropy name="random"/>
+							<inline name="rtc">2023-07-07 00:00:00</inline>
+						</dir>
+					</vfs>
+					<arg value="test-rand_status_test"/>
+				</config>
+			</start>
+			<start name="test-rsa_test">
+				<config>
+					<libc stdin="/dev/null" stdout="/dev/log" stderr="/dev/log"
+					      rtc="/dev/rtc" rng="/dev/random"/>
+					<vfs>
+						<dir name="dev">
+							<log/>
+							<null/>
+							<jitterentropy name="random"/>
+							<inline name="rtc">2023-07-07 00:00:00</inline>
+						</dir>
+					</vfs>
+					<arg value="test-rsa_test"/>
+				</config>
+			</start>
+			<start name="test-x509_time_test">
+				<config>
+					<libc stdin="/dev/null" stdout="/dev/log" stderr="/dev/log"
+					      rtc="/dev/rtc" rng="/dev/random"/>
+					<vfs>
+						<dir name="dev">
+							<log/>
+							<null/>
+							<jitterentropy name="random"/>
+							<inline name="rtc">2023-07-07 00:00:00</inline>
+						</dir>
+					</vfs>
+					<arg value="test-pkcs7_test"/>
+				</config>
+			</start>
+		</config>
+		<route>
+			<service name="Timer"> <child name="timer"/> </service>
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>
+</config>
+}
+
+create_boot_directory
+
+install_config $config
+
+import_from_depot $depot_archives
+
+build $build_components
+
+build_boot_image [build_artifacts]
+
+append qemu_args " -nographic "
+
+run_genode_until {child "test-openssl" exited with exit value 0} 800

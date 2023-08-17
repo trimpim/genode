@@ -6,5 +6,9 @@ LIBS += libcrypto
 
 ARCH = $(filter 32bit 64bit,$(SPECS))
 
-INC_DIR += $(OPENSSL_DIR)/include
+# has to be the first path because it includes openssl/configuration.h
 INC_DIR += $(LIB_OPENSSL_DIR)/spec/$(ARCH)
+
+INC_DIR += $(OPENSSL_DIR)/include
+INC_DIR += $(OPENSSL_DIR)/include/spec/$(ARCH)
+INC_DIR += $(LIB_OPENSSL_DIR)

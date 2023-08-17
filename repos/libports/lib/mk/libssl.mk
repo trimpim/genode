@@ -11,7 +11,6 @@ SRC_C += \
 	d1_msg.c \
 	d1_srtp.c \
 	methods.c \
-	packet.c \
 	pqueue.c \
 	record/dtls1_bitmap.c \
 	record/rec_layer_d1.c \
@@ -19,6 +18,7 @@ SRC_C += \
 	record/ssl3_buffer.c \
 	record/ssl3_record.c \
 	record/ssl3_record_tls13.c \
+	record/tls_pad.c \
 	s3_cbc.c \
 	s3_enc.c \
 	s3_lib.c \
@@ -28,10 +28,12 @@ SRC_C += \
 	ssl_ciph.c \
 	ssl_conf.c \
 	ssl_err.c \
+	ssl_err_legacy.c \
 	ssl_init.c \
 	ssl_lib.c \
 	ssl_mcnf.c \
 	ssl_rsa.c \
+	ssl_rsa_legacy.c \
 	ssl_sess.c \
 	ssl_stat.c \
 	ssl_txt.c \
@@ -49,14 +51,22 @@ SRC_C += \
 	t1_lib.c \
 	t1_trce.c \
 	tls13_enc.c \
+	tls_depr.c \
 	tls_srp.c \
 	# end of SRC_C
 
+# has to be the first path because it includes openssl/configuration.h
+INC_DIR += $(REP_DIR)/src/lib/openssl/spec/64bit
+
+INC_DIR += $(REP_DIR)/src/lib/openssl
 INC_DIR += $(OPENSSL_PORT_DIR)/include/openssl
 INC_DIR += $(LIB_SRC_DIR)/include
 INC_DIR += $(LIB_SRC_DIR)
 INC_DIR += $(LIB_SRC_DIR)/crypto
 INC_DIR += $(OPENSSL_PORT_DIR)/include
+
+ARCH = $(filter 32bit 64bit,$(SPECS))
+INC_DIR += $(OPENSSL_PORT_DIR)/include/spec/$(ARCH)
 
 vpath %.c $(LIB_SRC_DIR)/ssl
 

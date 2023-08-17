@@ -17,7 +17,9 @@
 
 
 unsigned int OPENSSL_armcap_P = ARMV7_NEON;
+unsigned int OPENSSL_armv8_rsa_neonized = 0;
+unsigned int OPENSSL_arm_midr = 0;
 
-void OPENSSL_cpuid_setup(void) { }
+void OPENSSL_cpuid_setup(void) { OPENSSL_armv8_rsa_neonized = 1; }
 
 uint32_t OPENSSL_rdtsc(void) { return 0; }

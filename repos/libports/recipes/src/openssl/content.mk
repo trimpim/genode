@@ -18,8 +18,9 @@ content: src/lib/openssl
 src/lib/openssl:
 	mkdir -p $@
 	cp -r $(PORT_DIR)/src/lib/openssl/crypto $@/
-	cp    $(PORT_DIR)/src/lib/openssl/e_os.h $@/
+	cp -r $(PORT_DIR)/src/lib/openssl/engines $@/
 	cp -r $(PORT_DIR)/src/lib/openssl/include $@/
+	cp -r $(PORT_DIR)/src/lib/openssl/providers $@/
 	cp -r $(PORT_DIR)/src/lib/openssl/ssl $@/
 	cp -r $(REP_DIR)/src/lib/openssl/crypto $@/
 	cp -r $(REP_DIR)/src/lib/openssl/spec $@/
@@ -27,4 +28,4 @@ src/lib/openssl:
 content: LICENSE
 
 LICENSE:
-	cp $(PORT_DIR)/src/lib/openssl/LICENSE $@
+	cp $(PORT_DIR)/src/lib/openssl/LICENSE.txt $@

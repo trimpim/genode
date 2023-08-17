@@ -1,137 +1,278 @@
 LICENSE   := OpenSSL
-VERSION   := 1.1.1t
+VERSION   := 3.1.1
 DOWNLOADS := openssl.archive
 
-URL(openssl) := https://www.openssl.org/source/openssl-$(VERSION).tar.gz
-SHA(openssl) := 8dee9b24bdb1dcbf0c3d1e9b02fb8f6bf22165e807f45adeb7c9677536859d3b
+URL(openssl) := https://github.com/openssl/openssl/archive/refs/tags/openssl-$(VERSION).tar.gz
+SHA(openssl) := 68b405ea64521c985377795b5b705d116c1cf3bf93384d1bbe78247f76010822
 DIR(openssl) := src/lib/openssl
 
 DIRS := include
-DIR_CONTENT(include) = src/lib/openssl/include/openssl
-
-#PATCHES   := $(addprefix src/lib/openssl/,rand_unix_c.patch ssl.patch constant_time_locl.patch)
-#PATCH_OPT := -p1 -d src/lib/openssl
+DIR_CONTENT(include) := src/lib/openssl/include/openssl
+DIR_CONTENT(include) += src/lib/openssl/include/crypto
 
 PATCHES   := src/lib/openssl/crypto.patch
 PATCH_OPT := -p1
 
 $(call check_tool,perl)
 
-ASM_X86_32 := \
-	src/lib/openssl/crypto/aes/asm/aesni-x86.s \
-	src/lib/openssl/crypto/aes/asm/vpaes-x86.s \
-	src/lib/openssl/crypto/bf/asm/bf-586.s \
-	src/lib/openssl/crypto/bn/asm/bn-586.s \
-	src/lib/openssl/crypto/bn/asm/co-586.s \
-	src/lib/openssl/crypto/bn/asm/x86-gf2m.s \
-	src/lib/openssl/crypto/bn/asm/x86-mont.s \
-	src/lib/openssl/crypto/camellia/asm/cmll-x86.s \
-	src/lib/openssl/crypto/chacha/asm/chacha-x86.s \
-	src/lib/openssl/crypto/des/asm/des-586.s \
-	src/lib/openssl/crypto/ec/asm/ecp_nistz256-x86.s \
-	src/lib/openssl/crypto/md5/asm/md5-586.s \
-	src/lib/openssl/crypto/modes/asm/ghash-x86.s \
-	src/lib/openssl/crypto/poly1305/asm/poly1305-x86.s \
-	src/lib/openssl/crypto/rc4/asm/rc4-586.s \
-	src/lib/openssl/crypto/ripemd/asm/rmd-586.s \
-	src/lib/openssl/crypto/sha/asm/sha1-586.s \
-	src/lib/openssl/crypto/sha/asm/sha256-586.s \
-	src/lib/openssl/crypto/sha/asm/sha512-586.s \
-	src/lib/openssl/crypto/whrlpool/asm/wp-mmx.s \
-	src/lib/openssl/crypto/x86cpuid.s
-ASM_X86_64 := \
-	src/lib/openssl/crypto/aes/asm/aesni-mb-x86_64.s \
-	src/lib/openssl/crypto/aes/asm/aesni-sha1-x86_64.s \
-	src/lib/openssl/crypto/aes/asm/aesni-sha256-x86_64.s \
-	src/lib/openssl/crypto/aes/asm/aesni-x86_64.s \
-	src/lib/openssl/crypto/aes/asm/vpaes-x86_64.s \
-	src/lib/openssl/crypto/bn/asm//rsaz-avx2.s \
-	src/lib/openssl/crypto/bn/asm//rsaz-x86_64.s \
-	src/lib/openssl/crypto/bn/asm//x86_64-gf2m.s \
-	src/lib/openssl/crypto/bn/asm//x86_64-mont.s \
-	src/lib/openssl/crypto/bn/asm//x86_64-mont5.s \
-	src/lib/openssl/crypto/camellia/asm/cmll-x86_64.s \
-	src/lib/openssl/crypto/chacha/asm/chacha-x86_64.s \
-	src/lib/openssl/crypto/ec/asm/ecp_nistz256-x86_64.s \
-	src/lib/openssl/crypto/ec/asm/x25519-x86_64.s \
-	src/lib/openssl/crypto/md5/asm/md5-x86_64.s \
-	src/lib/openssl/crypto/modes/asm/aesni-gcm-x86_64.s \
-	src/lib/openssl/crypto/modes/asm/ghash-x86_64.s \
-	src/lib/openssl/crypto/poly1305/asm/poly1305-x86_64.s \
-	src/lib/openssl/crypto/rc4/asm/rc4-md5-x86_64.s \
-	src/lib/openssl/crypto/rc4/asm/rc4-x86_64.s \
-	src/lib/openssl/crypto/sha/asm/keccak1600-x86_64.s \
-	src/lib/openssl/crypto/sha/asm/sha1-mb-x86_64.s \
-	src/lib/openssl/crypto/sha/asm/sha1-x86_64.s \
-	src/lib/openssl/crypto/sha/asm/sha256-mb-x86_64.s \
-	src/lib/openssl/crypto/sha/asm/sha256-x86_64.s \
-	src/lib/openssl/crypto/sha/asm/sha512-x86_64.s \
-	src/lib/openssl/crypto/whrlpool/asm/wp-x86_64.s \
-	src/lib/openssl/crypto/x86_64cpuid.s
-ASM_ARM_32 := \
-	src/lib/openssl/crypto/aes/asm/aes-armv4.S \
-	src/lib/openssl/crypto/aes/asm/aesv8-arm32.S \
-	src/lib/openssl/crypto/bn/asm/armv4-gf2m.S \
-	src/lib/openssl/crypto/bn/asm/armv4-mont.S \
-	src/lib/openssl/crypto/chacha/asm/chacha-armv4.S \
-	src/lib/openssl/crypto/ec/asm/ecp_nistz256-armv4.S \
-	src/lib/openssl/crypto/modes/asm/ghash-armv4.S \
-	src/lib/openssl/crypto/modes/asm/ghashv8-arm32.S \
-	src/lib/openssl/crypto/poly1305/asm/poly1305-armv4.S \
-	src/lib/openssl/crypto/sha/asm/keccak1600-armv4.S \
-	src/lib/openssl/crypto/sha/asm/sha1-armv4-large.S \
-	src/lib/openssl/crypto/sha/asm/sha256-armv4.S \
-	src/lib/openssl/crypto/sha/asm/sha512-armv4.S \
-	src/lib/openssl/crypto/armv4cpuid.S
-ASM_ARM_64 := $(addprefix src/lib/openssl/crypto/, \
-	aes/asm/aesv8-arm64.S \
-	aes/asm/vpaes-armv8.S \
-	bn/asm/armv8-mont.S \
-	chacha/asm/chacha-armv8.S \
-	ec/asm/ecp_nistz256-armv8.S \
-	modes/asm/ghashv8-arm64.S \
-	poly1305/asm/poly1305-armv8.S \
-	sha/asm/keccak1600-armv8.S \
-	sha/asm/sha1-armv8.S \
-	sha/asm/sha256-armv8.S \
-	sha/asm/sha512-armv8.S \
-	arm64cpuid.S)
+ASM_X86_32 := $(addprefix src/lib/openssl/, \
+	crypto/aes/asm/aes-586.s \
+	crypto/aes/asm/aesni-x86.s \
+	crypto/aes/asm/vpaes-x86.s \
+	crypto/bf/asm/bf-586.s \
+	crypto/bn/asm/bn-586.s \
+	crypto/bn/asm/co-586.s \
+	crypto/bn/asm/x86-gf2m.s \
+	crypto/bn/asm/x86-mont.s \
+	crypto/camellia/asm/cmll-x86.s \
+	crypto/chacha/asm/chacha-x86.s \
+	crypto/des/asm/crypt586.s \
+	crypto/des/asm/des-586.s \
+	crypto/ec/asm/ecp_nistz256-x86.s \
+	crypto/x86cpuid.s \
+	crypto/md5/asm/md5-586.s \
+	crypto/modes/asm/ghash-x86.s \
+	crypto/poly1305/asm/poly1305-x86.s \
+	crypto/rc4/asm/rc4-586.s \
+	crypto/ripemd/asm/rmd-586.s \
+	crypto/sha/asm/sha1-586.s \
+	crypto/sha/asm/sha256-586.s \
+	crypto/sha/asm/sha512-586.s \
+	crypto/whrlpool/asm/wp-mmx.s \
+	engines/asm/e_padlock-x86.s \
+	) # end of ASM_x86_32
 
-$(ASM_X86_32): PERLASM_SCHEME=elf -m32 -fPIC -DOPENSSL_IA32_SSE2 -DSHA1_ASM -DSHA256_ASM -DSHA512_ASM
-$(ASM_X86_64): PERLASM_SCHEME=elf
+ASM_X86_64 := $(addprefix src/lib/openssl/, \
+	crypto/aes/asm/aes-x86_64.s \
+	crypto/aes/asm/aesni-mb-x86_64.s \
+	crypto/aes/asm/aesni-sha1-x86_64.s \
+	crypto/aes/asm/aesni-sha256-x86_64.s \
+	crypto/aes/asm/aesni-x86_64.s \
+	crypto/aes/asm/bsaes-x86_64.s \
+	crypto/aes/asm/vpaes-x86_64.s \
+	crypto/bn/asm/rsaz-2k-avx512.s \
+	crypto/bn/asm/rsaz-3k-avx512.s \
+	crypto/bn/asm/rsaz-4k-avx512.s \
+	crypto/bn/asm/rsaz-avx2.s \
+	crypto/bn/asm/rsaz-x86_64.s \
+	crypto/bn/asm/x86_64-gf2m.s \
+	crypto/bn/asm/x86_64-mont.s \
+	crypto/bn/asm/x86_64-mont5.s \
+	crypto/camellia/asm/cmll-x86_64.s \
+	crypto/chacha/asm/chacha-x86_64.s \
+	crypto/ec/asm/ecp_nistz256-x86_64.s \
+	crypto/ec/asm/x25519-x86_64.s \
+	crypto/md5/asm/md5-x86_64.s \
+	crypto/modes/asm/aesni-gcm-x86_64.s \
+	crypto/modes/asm/ghash-x86_64.s \
+	crypto/poly1305/asm/poly1305-x86_64.s \
+	crypto/rc4/asm/rc4-md5-x86_64.s \
+	crypto/rc4/asm/rc4-x86_64.s \
+	crypto/sha/asm/keccak1600-x86_64.s \
+	crypto/sha/asm/sha1-mb-x86_64.s \
+	crypto/sha/asm/sha1-x86_64.s \
+	crypto/sha/asm/sha256-mb-x86_64.s \
+	crypto/sha/asm/sha256-x86_64.s \
+	crypto/sha/asm/sha512-x86_64.s \
+	crypto/whrlpool/asm/wp-x86_64.s \
+	crypto/x86_64cpuid.s \
+	engines/asm/e_padlock-x86_64.s \
+	) # end of ASM_x86_64
+
+ASM_ARM_32 := $(addprefix src/lib/openssl/, \
+	crypto/aes/asm/aes-armv4.S \
+	crypto/aes/asm/aesv8-arm32.S \
+	crypto/aes/asm/bsaes-armv7.S \
+	crypto/armv4cpuid.S \
+	crypto/bn/asm/armv4-gf2m.S \
+	crypto/bn/asm/armv4-mont.S \
+	crypto/chacha/asm/chacha-armv4.S \
+	crypto/ec/asm/ecp_nistz256-armv4.S \
+	crypto/modes/asm/ghash-armv4.S \
+	crypto/modes/asm/ghashv8-arm32.S \
+	crypto/poly1305/asm/poly1305-armv4.S \
+	crypto/sha/asm/keccak1600-armv4.S \
+	crypto/sha/asm/sha1-armv4-large.S \
+	crypto/sha/asm/sha256-armv4.S \
+	crypto/sha/asm/sha512-armv4.S \
+	) # end of ASM_ARM_32
+
+ASM_ARM_64 := $(addprefix src/lib/openssl/, \
+	crypto/aes/asm/aesv8-arm64.S \
+	crypto/aes/asm/bsaes-armv8.S \
+	crypto/aes/asm/vpaes-armv8.S \
+	crypto/arm64cpuid.S \
+	crypto/bn/asm/armv8-mont.S \
+	crypto/chacha/asm/chacha-armv8-sve.S \
+	crypto/chacha/asm/chacha-armv8.S \
+	crypto/ec/asm/ecp_nistz256-armv8.S \
+	crypto/modes/asm/aes-gcm-armv8-unroll8_64.S \
+	crypto/modes/asm/aes-gcm-armv8_64.S \
+	crypto/modes/asm/ghashv8-arm64.S \
+	crypto/poly1305/asm/poly1305-armv8.S \
+	crypto/sha/asm/keccak1600-armv8.S \
+	crypto/sha/asm/sha1-armv8.S \
+	crypto/sha/asm/sha256-armv8.S \
+	crypto/sha/asm/sha512-armv8.S \
+	crypto/sm3/asm/sm3-armv8.S \
+	crypto/sm4/asm/sm4-armv8.S \
+	crypto/sm4/asm/vpsm4-armv8.S \
+	) # end of ASM_ARM_64
+
+GENERATED_SOURCE := $(addprefix src/lib/openssl/, \
+	providers/common/der/der_digests_gen.c \
+	providers/common/der/der_dsa_gen.c \
+	providers/common/der/der_ec_gen.c \
+	providers/common/der/der_ecx_gen.c \
+	providers/common/der/der_rsa_gen.c \
+	providers/common/der/der_sm2_gen.c \
+	providers/common/der/der_wrap_gen.c \
+	) # end of GENERATED_SOURCE
+
+GENERATED_PRIVATE_HEADERS := $(addprefix src/lib/openssl/providers/common/include/, \
+	prov/der_digests.h \
+	prov/der_dsa.h \
+	prov/der_ec.h \
+	prov/der_ecx.h \
+	prov/der_rsa.h \
+	prov/der_sm2.h \
+	prov/der_wrap.h \
+	) # end of GENERATED_PRIVATE_HEADERS
+
+GENERATED_HEADERS := \
+	crypto/bn_conf.h \
+	crypto/dso_conf.h \
+	openssl/asn1.h \
+	openssl/asn1t.h \
+	openssl/bio.h \
+	openssl/cmp.h \
+	openssl/cms.h \
+	openssl/conf.h \
+	openssl/crmf.h \
+	openssl/crypto.h \
+	openssl/ct.h \
+	openssl/err.h \
+	openssl/ess.h \
+	openssl/fipskey.h \
+	openssl/lhash.h \
+	openssl/ocsp.h \
+	openssl/opensslv.h \
+	openssl/pkcs12.h \
+	openssl/pkcs7.h \
+	openssl/safestack.h \
+	openssl/srp.h \
+	openssl/ssl.h \
+	openssl/ui.h \
+	openssl/x509.h \
+	openssl/x509_vfy.h \
+	openssl/x509v3.h \
+	# end of GENERATED_HEADERS
+
+HEADERS_64bit := $(addprefix include/spec/64bit/,$(GENERATED_HEADERS))
+HEADERS_32bit := $(addprefix include/spec/32bit/,$(GENERATED_HEADERS))
+
+$(ASM_X86_32): PERLASM_SCHEME=elf -m32 -fPIC -DOPENSSL_IA32_SSE2
+$(ASM_X86_32): PERLASM_CC=/usr/local/genode/tool/23.05/bin/genode-x86-gcc
+
+$(ASM_X86_64): PERLASM_SCHEME=elf -m64 -fPIC
+$(ASM_X86_64): PERLASM_CC=/usr/local/genode/tool/23.05/bin/genode-x86-gcc
+
 $(ASM_ARM_32): PERLASM_SCHEME=linux32
+$(ASM_ARM_32): PERLASM_CC=/usr/local/genode/tool/23.05/bin/genode-arm-gcc
+
 $(ASM_ARM_64): PERLASM_SCHEME=linux64
+$(ASM_ARM_32): PERLASM_CC=/usr/local/genode/tool/23.05/bin/genode-aarch64-gcc
+
+DOFILE_PL := src/lib/openssl/util/dofile.pl
+$(HEADERS_64bit): PERLHEADER_SCHEME := -Mconfigdata $(DOFILE_PL) -oMakefile
+$(HEADERS_64bit): PERL_INC_DIRS     := -Ispec/64bit
+
+$(HEADERS_32bit): PERLHEADER_SCHEME := -Mconfigdata $(DOFILE_PL) -oMakefile
+$(HEADERS_32bit): PERL_INC_DIRS     := -Ispec/32bit
+
+$(GENERATED_PRIVATE_HEADERS): DER_DIR           := ../../src/lib/openssl/providers/common/der/
+$(GENERATED_PRIVATE_HEADERS): PERLHEADER_SCHEME := -Mconfigdata -Moids_to_c ../../$(DOFILE_PL) -oMakefile
+$(GENERATED_PRIVATE_HEADERS): PERL_INC_DIRS     := -I. -I$(DER_DIR)
+
+$(GENERATED_SOURCE): DER_DIR        := ../../src/lib/openssl/providers/common/der/
+$(GENERATED_SOURCE): PERLSRC_SCHEME := -Mconfigdata -Moids_to_c ../../$(DOFILE_PL) -oMakefile
+$(GENERATED_SOURCE): PERL_INC_DIRS  := -I. -I$(DER_DIR)
 
 %.s: %.pl
 	@$(MSG_GENERATE)$@
-	$(VERBOSE)perl $< $(PERLASM_SCHEME) $@
+	$(VERBOSE)CC=$(PERLASM_CC) perl $< $(PERLASM_SCHEME) $@
 
 %.S: %.pl
 	@$(MSG_GENERATE)$@
-	$(VERBOSE)perl $< $(PERLASM_SCHEME) $@
+	$(VERBOSE)CC=$(PERLASM_CC) perl $< $(PERLASM_SCHEME) $@
 
 src/lib/openssl/crypto/sha/asm/sha256-x86_64.s: src/lib/openssl/crypto/sha/asm/sha512-x86_64.pl
 	@$(MSG_GENERATE)$@
-	$(VERBOSE)perl $< $(PERLASM_SCHEME) $@
+	$(VERBOSE)CC=$(PERLASM_CC) perl $< $(PERLASM_SCHEME) $@
 
 src/lib/openssl/crypto/sha/asm/sha256-armv8.S: src/lib/openssl/crypto/sha/asm/sha512-armv8.pl
 	@$(MSG_GENERATE)$@
-	$(VERBOSE)perl $< $(PERLASM_SCHEME) $@
+	$(VERBOSE)CC=$(PERLASM_CC) perl $< $(PERLASM_SCHEME) $@
 
 src/lib/openssl/crypto/aes/asm/aesv8-arm32.S: src/lib/openssl/crypto/aes/asm/aesv8-armx.pl
 	@$(MSG_GENERATE)$@
-	$(VERBOSE)perl $< $(PERLASM_SCHEME) $@
+	$(VERBOSE)CC=$(PERLASM_CC) perl $< $(PERLASM_SCHEME) $@
 
 src/lib/openssl/crypto/aes/asm/aesv8-arm64.S: src/lib/openssl/crypto/aes/asm/aesv8-armx.pl
 	@$(MSG_GENERATE)$@
-	$(VERBOSE)perl $< $(PERLASM_SCHEME) $@
+	$(VERBOSE)CC=$(PERLASM_CC) perl $< $(PERLASM_SCHEME) $@
 
 src/lib/openssl/crypto/modes/asm/ghashv8-arm32.S: src/lib/openssl/crypto/modes/asm/ghashv8-armx.pl
 	@$(MSG_GENERATE)$@
-	$(VERBOSE)perl $< $(PERLASM_SCHEME) $@
+	$(VERBOSE)CC=$(PERLASM_CC) perl $< $(PERLASM_SCHEME) $@
 
 src/lib/openssl/crypto/modes/asm/ghashv8-arm64.S: src/lib/openssl/crypto/modes/asm/ghashv8-armx.pl
 	@$(MSG_GENERATE)$@
-	$(VERBOSE)perl $< $(PERLASM_SCHEME) $@
+	$(VERBOSE)CC=$(PERLASM_CC) perl $< $(PERLASM_SCHEME) $@
 
+include/spec/64bit/%.h: src/lib/openssl/include/%.h.in
+	@$(MSG_GENERATE)$@
+	$(VERBOSE)mkdir -p $(dir $@)
+	$(VERBOSE)perl $(PERL_INC_DIRS) $(PERLHEADER_SCHEME) $< > $@
+
+include/spec/32bit/%.h: src/lib/openssl/include/%.h.in
+	@$(MSG_GENERATE)$@
+	$(VERBOSE)mkdir -p $(dir $@)
+	$(VERBOSE)perl $(PERL_INC_DIRS) $(PERLHEADER_SCHEME) $< > $@
+
+# This files are the same on all platforms
+src/lib/openssl/providers/common/include/%.h: src/lib/openssl/providers/common/include/%.h.in
+	@$(MSG_GENERATE)$@
+	$(VERBOSE)mkdir -p $(dir $@)
+	$(VERBOSE)cd spec/32bit ; perl $(PERL_INC_DIRS) $(PERLHEADER_SCHEME) ../../$< > ../../$@
+
+# This files are the same on all platforms
+src/lib/openssl/providers/common/der/%.c:
+	@$(MSG_GENERATE)$@
+	$(VERBOSE)cd spec/32bit ; \
+	          perl $(PERL_INC_DIRS) $(PERLSRC_SCHEME) ../../src/lib/openssl/providers/common/der/$*.c.in > ../../$@
+
+# generated %.h files are identical for:
+#   x86_64 and arm64
+spec/64bit/configdata.pm:
+	@$(MSG_GENERATE)$@
+	$(VERBOSE)mkdir -p spec/64bit && \
+		cd spec/64bit && \
+		../../src/lib/openssl/Configure linux-x86_64 2>&1 > /dev/null
+
+# generated %.h files are identical for:
+#   x86_32 and arm
+spec/32bit/configdata.pm:
+	@$(MSG_GENERATE)$@
+	$(VERBOSE)mkdir -p spec/32bit && \
+		cd spec/32bit && \
+		../../src/lib/openssl/Configure linux-x86 2>&1 > /dev/null
+
+# generate files normaly created by Condigure / make
 _dirs: $(ASM_X86_32) $(ASM_X86_64) $(ASM_ARM_32) $(ASM_ARM_64)
+_dirs: spec/64bit/configdata.pm $(HEADERS_64bit)
+_dirs: spec/32bit/configdata.pm $(HEADERS_32bit)
+_dirs: $(GENERATED_PRIVATE_HEADERS)
+_dirs: $(GENERATED_SOURCE)
+
+# vim: ft=make
