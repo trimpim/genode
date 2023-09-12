@@ -53,7 +53,7 @@ void Depot_download_manager::gen_fetchurl_start_content(Xml_generator &xml,
 				});
 				xml.node("inline", [&] {
 					xml.attribute("name", "random");
-					String<64> entropy("01234567890123456789");
+					String<64> entropy("l0LOd0IkZCgKkApOJPY4kHAuUjmriv/95zbMx46wKkgYBsqkj7gktA==");
 					xml.append(entropy.string());
 				});
 			});
