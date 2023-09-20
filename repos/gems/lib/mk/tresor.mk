@@ -20,6 +20,8 @@ SRC_CC += sb_check.cc
 SRC_CC += vbd_check.cc
 SRC_CC += ft_check.cc
 
+CC_OPT += -Wno-error=deprecated-declarations
+
 vpath % $(TRESOR_DIR)
 
 INC_DIR += $(TRESOR_DIR)/include
