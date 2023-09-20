@@ -6,4 +6,6 @@ SRC_CC  += aes_cbc_4k.cc
 INC_DIR += $(REP_DIR)/src/lib/aes_cbc_4k
 INC_DIR += $(LIBSSL_PORT_DIR)/include
 
+CC_OPT += -Wno-error=deprecated-declarations
+
 vpath % $(REP_DIR)/src/lib/aes_cbc_4k
