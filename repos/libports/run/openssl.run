@@ -23,6 +23,7 @@ if { $is_autopilot } {
 	lappend build_components test/openssl/pkcs7_test
 	lappend build_components test/openssl/rand_status_test
 	lappend build_components test/openssl/rsa_test
+	lappend build_components test/openssl/sha256_test
 	lappend build_components test/openssl/x509_time_test
 }
 
@@ -79,6 +80,21 @@ set config {
 						</dir>
 					</vfs>
 					<arg value="test-constant_time_test"/>
+				</config>
+			</start>
+			<start name="test-sha256_test">
+				<config>
+					<libc stdin="/dev/null" stdout="/dev/log" stderr="/dev/log"
+					      rtc="/dev/rtc" rng="/dev/random"/>
+					<vfs>
+						<dir name="dev">
+							<log/>
+							<null/>
+							<jitterentropy name="random"/>
+							<inline name="rtc">2023-07-07 00:00:00</inline>
+						</dir>
+					</vfs>
+					<arg value="test-evp_sha256_test"/>
 				</config>
 			</start>
 			<start name="test-hexstr_test">
@@ -167,6 +183,7 @@ append config {
 		</config>
 		<route>
 			<service name="Timer"> <child name="timer"/> </service>
+			<service name="ROM" label_last="p_test.so"> <parent label="openssl_provider_test.lib.so"/> </service>
 			<any-service> <parent/> </any-service>
 		</route>
 	</start>
@@ -185,4 +202,11 @@ build_boot_image [build_artifacts]
 
 append qemu_args " -nographic "
 
-run_genode_until {child "test-openssl" exited with exit value 0} 800
+proc test_timeout { } {
+	if { [have_spec 32bit] } {
+		return 800
+	}
+	return 60
+}
+
+run_genode_until {child "test-openssl" exited with exit value 0} [test_timeout]
