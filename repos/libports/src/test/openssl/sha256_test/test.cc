@@ -11,6 +11,10 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
+/* Genode includes */
+#include <libc/args.h>
+#include <libc/component.h>
+
 /* openssl includes */
 #include <openssl/sha.h>
 
@@ -19,12 +23,16 @@
 #include <stdio.h>
 
 
-int main(int, char**)
+void Libc::Component::construct(Libc::Env &env)
 {
 	unsigned char const buf_in[]    { "This is a SHA256 test" };
 	unsigned char       buf_out[32] { };
 
-	auto result { SHA256(buf_in, sizeof(buf_in), buf_out) };
+	bool result { false };
+
+	Libc::with_libc([&] () {
+		result = SHA256(buf_in, sizeof(buf_in), buf_out);
+	});
 
 	if (!result) {
 		printf("nok sha256_test failed\n");

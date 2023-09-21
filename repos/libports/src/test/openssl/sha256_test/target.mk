@@ -1,6 +1,6 @@
 TARGET := test-sha256_test
 
-LIBS   += base libc libcrypto posix
+LIBS   += base libc libcrypto
 
 CC_OPT += -Wno-error=conversion
 
