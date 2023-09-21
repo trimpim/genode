@@ -105,13 +105,14 @@ install_config {
 				<dir name="dev">
 					<log/>
 					<null/>
+					<inline name="rtc">2000-01-01 00:00</inline>
 				</dir>
 				<dir name="socket">
 					<lwip dhcp="yes"/> </dir>
 				<tar name="genode_org.tar"/>
 			</vfs>
 			<libc stdin="/dev/null" stdout="/dev/log" stderr="/dev/log"
-			      socket="/socket" />
+			      socket="/socket" rtc="/dev/rtc"/>
 		</config>
 		<route>
 			<service name="Nic"> <child name="nic_router"/> </service>
