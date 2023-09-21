@@ -34,6 +34,10 @@ import_from_depot [depot_user]/src/[base_src] \
                   [depot_user]/src/vfs_lwip \
                   [depot_user]/src/zlib
 
+proc random_string { size } {
+	exec openssl rand -base64 $size
+}
+
 install_config {
 
 <config>
@@ -175,7 +179,7 @@ install_config {
 				<dir name="dev">
 					<log/> <null/>
 					<inline name="rtc">2000-01-01 00:00</inline>
-					<inline name="random">0123456789012345678901234567890123456789</inline>
+					<inline name="random">} [random_string 256] {</inline>
 				</dir>
 				<dir name="socket"> <lwip dhcp="yes"/> </dir>
 				<dir name="etc">
@@ -288,6 +292,6 @@ EpA5DBBklj8UE2CdONvN
 
 build { app/wireguard }
 
-build_boot_image { wireguard }
+build_boot_image [build_artifacts]
 
 run_genode_until forever
