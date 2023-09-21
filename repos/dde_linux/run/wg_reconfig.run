@@ -19,6 +19,10 @@ if {[expr ![have_spec arm_v8a] && ![have_spec x86_64]]} {
 	exit 0
 }
 
+proc random_string { size } {
+	exec openssl rand -base64 $size
+}
+
 create_boot_directory
 
 import_from_depot [depot_user]/src/libc \
@@ -222,7 +226,7 @@ append config {
 				<dir name="dev">
 					<log/> <null/>
 					<inline name="rtc">2019-07-04 12:00</inline>
-					<inline name="random">01234567890123456789</inline>
+					<inline name="random">} [random_string 256] {</inline>
 				</dir>
 				<dir name="socket">
 					<lwip dhcp="yes"/>
@@ -443,7 +447,7 @@ append config {
 				<dir name="dev">
 					<log/> <null/>
 					<inline name="rtc">2000-01-01 00:00</inline>
-					<inline name="random">0123456789012345678901234567890123456789</inline>
+					<inline name="random">} [random_string 256] {</inline>
 				</dir>
 				<dir name="socket"> <lwip dhcp="yes"/> </dir>
 				<dir name="etc">
