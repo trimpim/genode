@@ -39,6 +39,10 @@ proc socket_fs_plugin { } {
 	return $result
 }
 
+proc random_string { size } {
+	exec openssl rand -base64 $size
+}
+
 create_boot_directory
 
 import_from_depot [depot_user]/src/[base_src] \
@@ -135,7 +139,7 @@ install_config {
 			<vfs>
 				<dir name="dev">
 					<log/> <null/> <inline name="rtc">2000-01-01 00:00</inline>
-					<inline name="random">01234567890123456789</inline>
+					<inline name="random">} [random_string 256] {</inline>
 				</dir>
 				<dir name="socket"> } [socket_fs_plugin] { </dir>
 			</vfs>
