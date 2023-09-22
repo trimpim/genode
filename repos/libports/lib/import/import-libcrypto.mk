@@ -12,4 +12,6 @@ INC_DIR += $(OPENSSL_DIR)/include/spec/$(ARCH)
 
 LIBS += libc
 
+CC_OPT += -Wno-deprecated-declarations
+
 include $(call select_from_repositories,lib/import/import-libc.mk)
