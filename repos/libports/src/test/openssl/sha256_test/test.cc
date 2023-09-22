@@ -12,7 +12,7 @@
  */
 
 /* Genode includes */
-#include <libc/args.h>
+#include <base/log.h>
 #include <libc/component.h>
 
 /* openssl includes */
@@ -23,7 +23,7 @@
 #include <stdio.h>
 
 
-void Libc::Component::construct(Libc::Env &env)
+void Libc::Component::construct(Libc::Env &)
 {
 	unsigned char const buf_in[]    { "This is a SHA256 test" };
 	unsigned char       buf_out[32] { };
@@ -35,9 +35,10 @@ void Libc::Component::construct(Libc::Env &env)
 	});
 
 	if (!result) {
-		printf("nok sha256_test failed\n");
+		Genode::log("nok sha256_test failed");
 		exit(1);
 	}
 
-	printf("ok sha256_test\n");
+	Genode::log("ok sha256_test");
+	exit(0);
 }
