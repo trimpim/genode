@@ -10,8 +10,6 @@ INC_DIR += $(OPENSSL_DIR)/include
 
 LIBS += libcrypto
 
-CC_OPT += -Wno-error=deprecated-declarations -Wno-error=conversion
-
 vpath % $(REP_DIR)/src/lib/vfs/tresor_trust_anchor
 
 SHARED_LIB := yes
