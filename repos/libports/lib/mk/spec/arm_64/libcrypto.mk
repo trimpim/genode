@@ -35,6 +35,7 @@ SRC_S = \
 	chacha/asm/chacha-armv8-sve.s \
 	chacha/asm/chacha-armv8.s \
 	ec/asm/ecp_nistz256-armv8.s \
+	md5/asm/md5-aarch64.s \
 	modes/asm/aes-gcm-armv8-unroll8_64.s \
 	modes/asm/aes-gcm-armv8_64.s \
 	modes/asm/ghashv8-arm64.s \

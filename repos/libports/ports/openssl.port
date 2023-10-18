@@ -106,6 +106,7 @@ ASM_ARM_64 := $(addprefix src/lib/openssl/, \
 	crypto/chacha/asm/chacha-armv8-sve.S \
 	crypto/chacha/asm/chacha-armv8.S \
 	crypto/ec/asm/ecp_nistz256-armv8.S \
+	crypto/md5/asm/md5-aarch64.S \
 	crypto/modes/asm/aes-gcm-armv8-unroll8_64.S \
 	crypto/modes/asm/aes-gcm-armv8_64.S \
 	crypto/modes/asm/ghashv8-arm64.S \
