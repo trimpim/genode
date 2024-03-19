@@ -56,6 +56,20 @@ install_config {
 		<provides><service name="Timer"/></provides>
 	</start>
 
+	<start name="vfs" caps="100">
+		<resource name="RAM" quantum="4M"/>
+		<provides>
+			<service name="File_system"/>
+		</provides>
+		<config>
+			<vfs>
+				<ram/>
+			</vfs>
+			<policy label="lighttpd -> " root="/"/>
+			<policy label="test-lighttpd_late_file -> " root="/" writeable="yes"/>
+		</config>
+	</start>
+
 	<start name="nic_drv" caps="1000" managing_system="yes">
 		<resource name="RAM" quantum="32M"/>
 		<binary name="init"/>
@@ -103,6 +117,28 @@ install_config {
 			</domain>
 
 		</config>
+	</start>
+
+	<start name="test-lighttpd_late_file" caps="100">
+		<resource name="RAM" quantum="2M" />
+		<config>
+			<libc stdout="/dev/log" stderr="/dev/log"/>
+			<arg value="test-lighttpd_late_file" />
+			<arg value="20" />
+			<vfs>
+				<dir name="dev">
+					<log/>
+				</dir>
+				<dir name="results">
+					<fs/>
+				</dir>
+			</vfs>
+		</config>
+		<route>
+			<service name="File_system"> <child name="vfs"/> </service>
+			<service name="Timer"> <child name="timer"/> </service>
+			<any-service> <parent/> </any-service>
+		</route>
 	</start>
 
 	<start name="lighttpd" caps="200">
@@ -210,6 +246,9 @@ EpA5DBBklj8UE2CdONvN
 </html>
 					</inline>
 					<ram/>
+					<dir name="gtest">
+						<fs/>
+					</dir>
 				</dir>
 				<dir name="tmp"> <ram/> </dir>
 			</vfs>
@@ -218,12 +257,15 @@ EpA5DBBklj8UE2CdONvN
 		</config>
 
 		<route>
+			<service name="File_system"> <child name="vfs"/> </service>
 			<service name="Nic"> <child name="nic_router"/> </service>
 			<any-service> <parent/> <any-child/> </any-service>
 		</route>
-
 	</start>
+
 </config>}
+
+build test/lighttpd_late_file
 
 build_boot_image [build_artifacts]
 
