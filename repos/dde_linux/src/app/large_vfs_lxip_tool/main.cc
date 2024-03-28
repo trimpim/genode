@@ -1,0 +1,131 @@
+
+
+#include <base/log.h>
+#include <util/string.h>
+
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <arpa/inet.h>
+
+
+enum { PORT = 8888 };
+
+int echo_server_impl()
+{
+	using Genode::error;
+
+	Genode::log(" >>>>>> ECHO SERVER");
+
+	int server_fd { socket(AF_INET, SOCK_STREAM, 0) };
+	if (server_fd < 0) {
+		error("socket failed");
+		exit(EXIT_FAILURE);
+	}
+
+	// Forcefully attaching socket to the port 8080
+	int opt       { 1 };
+	if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
+		error("setsockopt");
+	    exit(EXIT_FAILURE);
+	}
+
+	// Forcefully attaching socket to the port
+	sockaddr_in const  addr  { 0, AF_INET, htons(PORT), { INADDR_ANY } };
+	sockaddr    const *paddr { reinterpret_cast<sockaddr const *>(&addr) };
+	if (bind(server_fd, paddr, sizeof(addr)) < 0) {
+	    error("bind failed");
+	    exit(EXIT_FAILURE);
+	}
+
+	if (listen(server_fd, 3) < 0) {
+	    error("listen");
+	    exit(EXIT_FAILURE);
+	}
+
+	socklen_t addrlen { sizeof(addr) };
+	int new_socket    { accept(server_fd, (struct sockaddr*)&addr, &addrlen) };
+	if (new_socket < 0) {
+	    error("accept");
+	    exit(EXIT_FAILURE);
+	}
+
+	char    *buffer   { (char *)malloc(256*1024) };
+	ssize_t  read_cnt { read(new_socket, buffer, 128*1024 - 1) };
+
+	// TODO: enc echo back
+	ssize_t  write_cnt { write(new_socket, buffer, read_cnt) };
+	
+	if (read_cnt != write_cnt) {
+	    error("cnt written != cnt read");
+	    exit(EXIT_FAILURE);
+	}
+
+	free(buffer);
+
+	// closing the connected socket
+	close(new_socket);
+
+	// closing the listening socket
+	close(server_fd);
+
+	return 0;
+}
+
+
+int sender_receiver_impl()
+{
+	using Genode::error;
+
+	Genode::log(" >>>>>> SENDER RECEIVER ");
+
+	int client_fd { socket(AF_INET, SOCK_STREAM, 0) };
+	if (client_fd < 0) {
+		error("socket failed");
+		exit(EXIT_FAILURE);
+	}
+
+	struct sockaddr_in serv_addr { .sin_family = AF_INET, .sin_port = htons(PORT) };
+	if (inet_pton(AF_INET, "10.0.3.5", &serv_addr.sin_addr) <= 0) {
+		error("Settin IP address failed");
+		exit(EXIT_FAILURE);
+	}
+
+	int                status    { connect(client_fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) };
+	if (status < 0) {
+		error("socket failed");
+		exit(EXIT_FAILURE);
+	}
+
+	return 0;
+}
+
+
+int main(int argc, char* argv[])
+{
+	using Genode::warning;
+	using Genode::log;
+
+	if (argc < 3) {
+		warning("usage: <large_vfs_lxip_tool> --mode [sender_reciver|echo]");
+		log("");
+		log("     sender_reciver  : send the message and wait for its response");
+		log("     echo_server     : wait for the message and echo it back");
+		return -1;
+	}
+
+	char *m { argv[2] };
+	Genode::String<30> mode { Genode::Cstring { m } };
+
+	if (mode == "echo_server") {
+		return echo_server_impl();
+	}
+
+	if (mode == "sender_receiver") {
+		return sender_receiver_impl();
+	}
+
+	Genode::error("UNKNOWN MODE : ",mode);
+	return -1;
+}

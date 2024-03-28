@@ -1,0 +1,87 @@
+
+create_boot_directory
+import_from_depot [depot_user]/src/[base_src] \
+                  [depot_user]/src/init \
+                  [depot_user]/src/libc \
+                  [depot_user]/src/nic_router \
+                  [depot_user]/src/posix \
+                  [depot_user]/src/vfs \
+                  [depot_user]/src/vfs_lxip
+
+
+build app/large_vfs_lxip_tool
+
+set config {
+<config>
+	<parent-provides>
+		<service name="CPU"/>
+		<service name="LOG"/>
+		<service name="PD"/>
+		<service name="RM"/>
+		<service name="ROM"/>
+		<service name="TRACE"/>
+	</parent-provides>
+
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+
+	<default caps="120"/>
+
+	<start name="timer">
+		<resource name="RAM" quantum="1M"/>
+		<provides> <service name="Timer"/> </provides>
+	</start>
+
+	<start name="nic_router" caps="200">
+		<resource name="RAM" quantum="10M"/>
+		<provides>
+			<service name="Nic"/>
+			<service name="Uplink"/>
+		</provides>
+		<config verbose_domain_state="yes">
+
+			<default-policy domain="downlink"/>
+
+			<domain name="downlink" interface="10.0.3.1/24"/>
+		</config>
+	</start>
+
+	<start name="sender_receiver">
+		<binary name="large_vfs_lxip_tool"/>
+		<resource name="RAM" quantum="16M"/>
+		<config>
+			<arg value="sender_receiver"/>
+			<arg value="--mode"/>
+			<arg value="sender_receiver"/>
+			<libc stdout="/dev/log" stderr="/dev/log" socket="/socket"/>
+			<vfs>
+				<dir name="dev"> <log/> </dir>
+				<dir name="socket"> <lxip ip_addr="10.0.3.4" netmask="255.255.0.0"/> </dir>
+			</vfs>
+		</config>
+	</start>
+
+	<start name="echo_server">
+		<binary name="large_vfs_lxip_tool"/>
+		<resource name="RAM" quantum="16M"/>
+		<config>
+			<arg value="echo"/>
+			<arg value="--mode"/>
+			<arg value="echo_server"/>
+			<libc stdout="/dev/log" stderr="/dev/log" socket="/socket"/>
+			<vfs>
+				<dir name="dev"> <log/> </dir>
+				<dir name="socket"> <lxip ip_addr="10.0.3.5" netmask="255.255.0.0"/> </dir>
+			</vfs>
+		</config>
+	</start>
+
+</config>
+}
+
+install_config $config
+
+build_boot_image [build_artifacts]
+
+run_genode_until forever
