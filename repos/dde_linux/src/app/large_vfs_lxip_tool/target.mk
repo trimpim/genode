@@ -1,6 +1,6 @@
 TARGET  = large_vfs_lxip_tool
 
-LIBS    = base posix vfs
+LIBS    = base libssl libcrypto posix vfs
 
 SRC_CC  = main.cc
 

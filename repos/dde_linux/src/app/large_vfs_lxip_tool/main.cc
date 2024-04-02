@@ -9,12 +9,26 @@
 #include <stdlib.h>
 #include <arpa/inet.h>
 
+/* openssl includes */
+#include <openssl/conf.h>
+#include <openssl/engine.h>
+#include <openssl/err.h>
+#include <openssl/ui.h>
+#include <openssl/ssl.h>
+//#include <tls_mosq.h>
 
 enum {
 	PORT         = 8888,
 	TX_SIZE      = 128 * 1024,
 	BUFFER_SIZE  = TX_SIZE * 2,
 };
+
+
+void init_tls(void)
+{
+	OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS | OPENSSL_INIT_ADD_ALL_DIGESTS | OPENSSL_INIT_LOAD_CONFIG, NULL);
+	auto x { SSL_get_ex_new_index(0, (void *)"client context", NULL, NULL, NULL) };
+}
 
 
 void handle_client(int client_socket)
