@@ -10,11 +10,51 @@
 #include <arpa/inet.h>
 
 
-enum { PORT = 8888 };
+enum {
+	PORT         = 8888,
+	TX_SIZE      = 128 * 1024,
+	BUFFER_SIZE  = TX_SIZE * 2,
+};
+
+
+void handle_client(int client_socket)
+{
+	using Genode::error;
+	using Genode::log;
+
+	Genode::log(" >>>>>> ECHO SERVER  client with socket-fd ", client_socket);
+
+	char    *buffer   { (char *)malloc(BUFFER_SIZE) };
+	ssize_t  read_cnt { 0 };
+	while (read_cnt < TX_SIZE) {
+		ssize_t cnt { read(client_socket, buffer, TX_SIZE) };
+		log("read ", cnt, " bytes");
+		read_cnt += cnt;
+	}
+
+	log("total read ", read_cnt, " bytes");
+
+	// TODO: enc echo back
+	ssize_t  write_cnt { write(client_socket, buffer, read_cnt) };
+	while (write_cnt < TX_SIZE) {
+		ssize_t cnt { write(client_socket, buffer, read_cnt) };
+		log("written ", write_cnt, " bytes");
+		write_cnt += cnt;
+	}
+	
+	log("total written ", write_cnt, " bytes");
+
+	free(buffer);
+
+	// closing the connected socket
+	close(client_socket);
+}
+
 
 int echo_server_impl()
 {
 	using Genode::error;
+	using Genode::log;
 
 	Genode::log(" >>>>>> ECHO SERVER");
 
@@ -44,28 +84,17 @@ int echo_server_impl()
 	    exit(EXIT_FAILURE);
 	}
 
-	socklen_t addrlen { sizeof(addr) };
-	int new_socket    { accept(server_fd, (struct sockaddr*)&addr, &addrlen) };
-	if (new_socket < 0) {
-	    error("accept");
-	    exit(EXIT_FAILURE);
+	while (true) {
+
+		socklen_t addrlen { sizeof(addr) };
+		int new_socket    { accept(server_fd, (struct sockaddr*)&addr, &addrlen) };
+		if (new_socket < 0) {
+		    error("accept");
+		    exit(EXIT_FAILURE);
+		}
+
+		handle_client(new_socket);
 	}
-
-	char    *buffer   { (char *)malloc(256*1024) };
-	ssize_t  read_cnt { read(new_socket, buffer, 128*1024 - 1) };
-
-	// TODO: enc echo back
-	ssize_t  write_cnt { write(new_socket, buffer, read_cnt) };
-	
-	if (read_cnt != write_cnt) {
-	    error("cnt written != cnt read");
-	    exit(EXIT_FAILURE);
-	}
-
-	free(buffer);
-
-	// closing the connected socket
-	close(new_socket);
 
 	// closing the listening socket
 	close(server_fd);
@@ -77,8 +106,9 @@ int echo_server_impl()
 int sender_receiver_impl()
 {
 	using Genode::error;
+	using Genode::log;
 
-	Genode::log(" >>>>>> SENDER RECEIVER ");
+	log(" >>>>>> SENDER RECEIVER ");
 
 	int client_fd { socket(AF_INET, SOCK_STREAM, 0) };
 	if (client_fd < 0) {
@@ -92,11 +122,31 @@ int sender_receiver_impl()
 		exit(EXIT_FAILURE);
 	}
 
-	int                status    { connect(client_fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) };
+	int status { connect(client_fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) };
 	if (status < 0) {
 		error("socket failed");
 		exit(EXIT_FAILURE);
 	}
+
+	char    *buffer   { (char *)malloc(BUFFER_SIZE) };
+	ssize_t  send_cnt { 0 };
+
+	while (send_cnt < TX_SIZE) {
+		ssize_t cnt { send(client_fd, buffer, TX_SIZE, 0) };
+		log("sent ", cnt, " bytes");
+		send_cnt += cnt;
+	}
+
+	log("total sent ", send_cnt, " bytes");
+
+	ssize_t read_cnt { 0 };
+	while (read_cnt < TX_SIZE) {
+		ssize_t cnt { read(client_fd, buffer, TX_SIZE) };
+		log("read ", cnt, " bytes");
+		read_cnt += cnt;
+	}
+
+	log("total read ", read_cnt, " bytes");
 
 	return 0;
 }

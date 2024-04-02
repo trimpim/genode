@@ -39,32 +39,26 @@ set config {
 			<service name="Nic"/>
 			<service name="Uplink"/>
 		</provides>
-		<config verbose_domain_state="yes">
+		<config verbose_domain_state="yes"
+		        verbose_packets="no">
 
-			<default-policy domain="downlink"/>
+			<policy label_prefix="echo_server" domain="echo"/>
+			<policy label_prefix="sender_receiver" domain="client"/>
 
-			<domain name="downlink" interface="10.0.3.1/24"/>
-		</config>
-	</start>
+			<domain name="echo" interface="10.0.3.1/24">
+				<dhcp-server ip_first="10.0.3.5" ip_last="10.0.3.5"/>
+			</domain>
 
-	<start name="sender_receiver">
-		<binary name="large_vfs_lxip_tool"/>
-		<resource name="RAM" quantum="16M"/>
-		<config>
-			<arg value="sender_receiver"/>
-			<arg value="--mode"/>
-			<arg value="sender_receiver"/>
-			<libc stdout="/dev/log" stderr="/dev/log" socket="/socket"/>
-			<vfs>
-				<dir name="dev"> <log/> </dir>
-				<dir name="socket"> <lxip ip_addr="10.0.3.4" netmask="255.255.0.0"/> </dir>
-			</vfs>
+			<domain name="client" interface="10.0.4.1/24">
+				<dhcp-server ip_first="10.0.4.5" ip_last="10.0.4.50"/>
+				<tcp dst="10.0.3.0/24"> <permit-any domain="echo"/> </tcp>
+			</domain>
 		</config>
 	</start>
 
 	<start name="echo_server">
 		<binary name="large_vfs_lxip_tool"/>
-		<resource name="RAM" quantum="16M"/>
+		<resource name="RAM" quantum="64M"/>
 		<config>
 			<arg value="echo"/>
 			<arg value="--mode"/>
@@ -72,7 +66,37 @@ set config {
 			<libc stdout="/dev/log" stderr="/dev/log" socket="/socket"/>
 			<vfs>
 				<dir name="dev"> <log/> </dir>
-				<dir name="socket"> <lxip ip_addr="10.0.3.5" netmask="255.255.0.0"/> </dir>
+				<dir name="socket"> <lxip dhcp="yes"/> </dir>
+			</vfs>
+		</config>
+	</start>
+
+	<start name="sender_receiver-1">
+		<binary name="large_vfs_lxip_tool"/>
+		<resource name="RAM" quantum="64M"/>
+		<config>
+			<arg value="sender_receiver"/>
+			<arg value="--mode"/>
+			<arg value="sender_receiver"/>
+			<libc stdout="/dev/log" stderr="/dev/log" socket="/socket"/>
+			<vfs>
+				<dir name="dev"> <log/> </dir>
+				<dir name="socket"> <lxip dhcp="yes"/> </dir>
+			</vfs>
+		</config>
+	</start>
+
+	<start name="sender_receiver-2">
+		<binary name="large_vfs_lxip_tool"/>
+		<resource name="RAM" quantum="64M"/>
+		<config>
+			<arg value="sender_receiver"/>
+			<arg value="--mode"/>
+			<arg value="sender_receiver"/>
+			<libc stdout="/dev/log" stderr="/dev/log" socket="/socket"/>
+			<vfs>
+				<dir name="dev"> <log/> </dir>
+				<dir name="socket"> <lxip dhcp="yes"/> </dir>
 			</vfs>
 		</config>
 	</start>
@@ -84,4 +108,4 @@ install_config $config
 
 build_boot_image [build_artifacts]
 
-run_genode_until forever
+run_genode_until {sender_receiver" exited with exit value 0} 30
