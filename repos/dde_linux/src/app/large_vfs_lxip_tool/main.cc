@@ -23,11 +23,46 @@ enum {
 	BUFFER_SIZE  = TX_SIZE * 2,
 };
 
+struct Ssl {
+	int      tls_index { 0 };
+	SSL     *ssl;
+	SSL_CTX *ssl_ctx;
+};
 
-void init_tls(void)
+
+static struct Ssl ssl_data { };
+
+void init_tls()
 {
 	OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS | OPENSSL_INIT_ADD_ALL_DIGESTS | OPENSSL_INIT_LOAD_CONFIG, NULL);
-	auto x { SSL_get_ex_new_index(0, (void *)"client context", NULL, NULL, NULL) };
+	ssl_data.tls_index = SSL_get_ex_new_index(0, (void *)"client context", NULL, NULL, NULL);
+}
+
+
+void deinit_tls()
+{
+	if(ssl_data.ssl){
+		if(!SSL_in_init(ssl_data.ssl)){
+			SSL_shutdown(ssl_data.ssl);
+		}
+		SSL_free(ssl_data.ssl);
+		ssl_data.ssl = NULL;
+	}
+}
+
+
+int tls_connect()
+{
+	ERR_clear_error();
+	
+	int ret { SSL_connect(ssl_data.ssl) };
+	if(ret != 1) {
+		Genode::error("tls_connect");
+		return -1;
+		//int err { SSL_get_error(ssl_data.ssl, ret) };
+	}
+
+	return 0;
 }
 
 
