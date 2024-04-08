@@ -3,13 +3,23 @@ create_boot_directory
 import_from_depot [depot_user]/src/[base_src] \
                   [depot_user]/src/init \
                   [depot_user]/src/libc \
+                  [depot_user]/src/linux_nic_drv \
+                  [depot_user]/src/linux_rtc_drv \
                   [depot_user]/src/nic_router \
+                  [depot_user]/src/openssl \
                   [depot_user]/src/posix \
+                  [depot_user]/src/stdcxx \
                   [depot_user]/src/vfs \
+                  [depot_user]/src/vfs_pipe \
                   [depot_user]/src/vfs_lxip
 
 
-build app/large_vfs_lxip_tool
+build {
+	lib/libmosquitto
+	lib/libmosquittopp
+	lib/jsonc
+	test/large_vfs_lxip_tool
+}
 
 set config {
 <config>
@@ -33,6 +43,23 @@ set config {
 		<provides> <service name="Timer"/> </provides>
 	</start>
 
+	<start name="linux_rtc_drv" caps="200" ld="no">
+		<resource name="RAM" quantum="8M"/>
+		<provides>
+			<service name="Rtc"/>
+		</provides>
+		<config>
+			<nic mac="02:00:00:00:12:11" tap="tap0"/>
+		</config>
+	</start>
+
+	<start name="linux_nic_drv" caps="200" ld="no">
+		<resource name="RAM" quantum="8M"/>
+		<config>
+			<nic mac="02:00:00:00:12:11" tap="tap0"/>
+		</config>
+	</start>
+
 	<start name="nic_router" caps="200">
 		<resource name="RAM" quantum="10M"/>
 		<provides>
@@ -42,60 +69,33 @@ set config {
 		<config verbose_domain_state="yes"
 		        verbose_packets="no">
 
-			<policy label_prefix="echo_server" domain="echo"/>
-			<policy label_prefix="sender_receiver" domain="client"/>
+			<policy label_prefix="linux_nic_drv" domain="uplink"/>
+			<policy label_prefix="mqtt_client"   domain="client"/>
 
-			<domain name="echo" interface="10.0.3.1/24">
-				<dhcp-server ip_first="10.0.3.5" ip_last="10.0.3.5"/>
+			<domain name="uplink" interface="10.0.2.55/24" gateway="10.0.2.1">
+				<nat domain="client"
+				     tcp-ports="300"/>
 			</domain>
 
 			<domain name="client" interface="10.0.4.1/24">
-				<dhcp-server ip_first="10.0.4.5" ip_last="10.0.4.50"/>
-				<tcp dst="10.0.3.0/24"> <permit-any domain="echo"/> </tcp>
+				<dhcp-server ip_first="10.0.4.5" ip_last="10.0.4.5"/>
+				<tcp dst="0.0.0.0/0"> <permit-any domain="uplink"/> </tcp>
 			</domain>
 		</config>
 	</start>
 
-	<start name="echo_server">
+	<start name="mqtt_client" caps="250">
 		<binary name="large_vfs_lxip_tool"/>
 		<resource name="RAM" quantum="64M"/>
 		<config>
-			<arg value="echo"/>
-			<arg value="--mode"/>
-			<arg value="echo_server"/>
-			<libc stdout="/dev/log" stderr="/dev/log" socket="/socket"/>
+			<arg value="mqtt_client"/>
+			<libc stdin="/dev/null" stdout="/dev/log" stderr="/dev/log"
+			      socket="/socket" rtc="/dev/rtc" pipe="/dev/pipe"/>
 			<vfs>
-				<dir name="dev"> <log/> </dir>
-				<dir name="socket"> <lxip dhcp="yes"/> </dir>
-			</vfs>
-		</config>
-	</start>
-
-	<start name="sender_receiver-1">
-		<binary name="large_vfs_lxip_tool"/>
-		<resource name="RAM" quantum="64M"/>
-		<config>
-			<arg value="sender_receiver"/>
-			<arg value="--mode"/>
-			<arg value="sender_receiver"/>
-			<libc stdout="/dev/log" stderr="/dev/log" socket="/socket"/>
-			<vfs>
-				<dir name="dev"> <log/> </dir>
-				<dir name="socket"> <lxip dhcp="yes"/> </dir>
-			</vfs>
-		</config>
-	</start>
-
-	<start name="sender_receiver-2">
-		<binary name="large_vfs_lxip_tool"/>
-		<resource name="RAM" quantum="64M"/>
-		<config>
-			<arg value="sender_receiver"/>
-			<arg value="--mode"/>
-			<arg value="sender_receiver"/>
-			<libc stdout="/dev/log" stderr="/dev/log" socket="/socket"/>
-			<vfs>
-				<dir name="dev"> <log/> </dir>
+				<dir name="dev">
+					<log/> <null/> <rtc/>
+					<dir name="pipe"> <pipe/> </dir>
+				</dir>
 				<dir name="socket"> <lxip dhcp="yes"/> </dir>
 			</vfs>
 		</config>
@@ -103,7 +103,6 @@ set config {
 
 </config>
 }
-
 install_config $config
 
 build_boot_image [build_artifacts]
