@@ -1,5 +1,3 @@
-# TODO: move to genode/repos/os
-
 SHARED_LIB := yes
 
 SRC_CC     += i2c_vfs.cc
