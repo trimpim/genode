@@ -1,5 +1,5 @@
 /*
- *  \brief  VFS plugin TODO:
+ *  \brief  VFS plugin for i2c
  *  \author Pirmin Duss
  *  \date   2024-03-29
  */
@@ -40,21 +40,33 @@ namespace Vfs_i2c {
 
 struct Vfs_i2c::Local_factory : File_system_factory, Watch_response_handler
 {
-//	using Device_list = List<Device_file_system_element>;
-
 	Vfs::Env                 &_env;
-	I2c::Settings             _settings;
+	I2c::Settings             _settings { };
 	I2c::Driver_base         &_driver;
 	Xml_node                  _config;
-	Vfs::Device_file_system   _device { _env, _config, _driver };
+	Vfs::Device_file_system   _device { _env, _device_config(_config), _driver };
+
+	Xml_node _device_config(Xml_node config)
+	{
+		return config.sub_node("device");
+	}
+
+//	I2c::Settings _settings_from_config(Xml_node config) const
+//	{
+//warning(__func__);
+//warning(config);
+//warning(__func__);
+//		I2c::Settings::Bus_address bus_address { .address = config.attribute_value("bus_address", static_cast<uint8_t>(0x00)) };
+//		return I2c::Settings { .bus_address = bus_address };
+//	}
 
 	Local_factory(Vfs::Env &env, Xml_node config);
 
-	Vfs::File_system *create(Vfs::Env&, Xml_node node) override
+	Vfs::File_system *create(Vfs::Env&, Xml_node) override
 	{
 	// TODO:
-	log(">>>>>>> ",__func__,"()");
-	log(node);
+log(">>>>>>> ",__func__,"()");
+//log(node);
 
 		return &_device;
 	}
@@ -77,16 +89,29 @@ class Vfs_i2c::I2c_file_system final : public Local_factory,
 
 		static Config _config(Xml_node node)
 		{
+			using Name = String<64>;
+
 			char buf[Config::capacity()] { };
 
-			Xml_generator xml(buf, sizeof(buf), "dir", [&] () {
-				xml.attribute("name", "i2c");
-				using Name = String<64>;
-				node.for_each_sub_node("device", [&] (Xml_node node) {
-					xml.node("dir", [&] () {
-						xml.attribute("name", node.attribute_value("name", Name { }));
+//			Xml_node device { node.sub_node("device") };
+			Xml_generator xml(buf, sizeof(buf), "config", [node, &xml] () {
+				xml.node("bus", [node, &xml] {
+					node.for_each_sub_node([&xml] (Xml_node device) {
+						xml.node("device", [device, &xml] {
+							xml.attribute("name",        device.attribute_value("name",        Name { }));
+							xml.attribute("bus_address", device.attribute_value("bus_address", 0x00lu));
+						});
 					});
 				});
+//				xml.attribute("name", device.attribute_value("name", Name { }));
+//				xml.attribute("bus_address", device.attribute_value("bus_address", 0x00lu));
+//				xml.attribute("name", "i2c");
+//				node.for_each_sub_node("device", [&] (Xml_node node) {
+//					xml.node("device", [&] () {
+//						xml.attribute("name", node.attribute_value("name", Name { }));
+//						xml.attribute("bus_address", node.attribute_value("bus_address", 0x00lu));
+//					});
+//				});
 			});
 			return Config { Cstring(buf) };
 		}
@@ -96,13 +121,20 @@ class Vfs_i2c::I2c_file_system final : public Local_factory,
 		I2c_file_system(Vfs::Env &vfs_env, Genode::Xml_node node)
 		:
 			Local_factory        { vfs_env, node },
-			Vfs::Dir_file_system { vfs_env, Xml_node { _config(node).string() }, *this },
+//			Vfs::Dir_file_system { vfs_env, Xml_node { _config(node).string() }, *this },
+			Vfs::Dir_file_system { vfs_env, node, *this },
 			_bus_speed_khz       { node.attribute_value("bus_speed_khz", static_cast<uint16_t>(400)) },
 			_verbose             { node.attribute_value("verbose", false) }
 		{
+			log(_config(node));
 			warning("====================================================");
 			log(node);
 			warning("====================================================");
+		}
+
+		void apply_config(Xml_node const &config) override
+		{
+			Local_factory::apply_config(config);
 		}
 };
 

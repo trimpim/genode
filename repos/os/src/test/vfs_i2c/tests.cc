@@ -12,48 +12,105 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-/* std includes */
+/* Genode includes */
+#include <libc/component.h>
+
+/* libc includes */
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdlib.h>
 #include <dirent.h>
 
-#include <gtest/gtest.h>
+//#include <stdio.h>  // printf()
+//#include <stdlib.h> // exit()
+//#include <string.h> // strlen()
 
-namespace I2c {
+namespace I2c_test {
 
-	struct Main;
+	using namespace Genode;
 
-	constexpr char const * device = "/dev/rtc";
+	class Main;
 }
 
 
-TEST(Vfs_i2c, open)
+class I2c_test::Main
 {
-	DIR           *dir;
-//	struct dirent *dir_entry;
+	private:
 
-	dir = opendir("/dev");
-	ASSERT_NE(dir, nullptr);
+		char const *_device_name = "/dev/i2c/rtc";
+
+		Env        &_env;
+		int         _device_fd;
+
+//		void _print_dir(char const *name, String<32> prefix_str = { })
+//		{
+//			DIR           *dp { nullptr };
+//			struct dirent *ep { nullptr };
 //
-//	dir_entry = readdir(dir);
-//	ASSERT_EQ(strcmp(dir_entry->d_name, "rtc"), 0);
-//	closedir(dir);
+//	log(name);
+//			Libc::with_libc([&dp, &name] {
+//				dp = opendir("dev");
+//				if (dp == nullptr) {
+//					error("failed to open directory '", name, "'");
+//					exit(1);
+//				}
+//			});
+//
+//			while ((ep = readdir(dp)) != nullptr) {
+//
+//				if (ep->d_type == DT_DIR) {
+//					log(prefix_str, "  dir  : ", Cstring { ep->d_name });
+//					_print_dir(String<128> { name, "/", Cstring { ep->d_name} }.string(),
+//					           String<32>  { prefix_str, "  "} );
+//				} else  {
+//					log(prefix_str, "  file : ", Cstring { ep->d_name });
+//				}
+//			}
+//
+//			Libc::with_libc([dp] {
+//				closedir (dp);
+//			});
+//		}
+
+	public:
+
+		Main(Env &env)
+		:
+			_env { env }
+		{
+//			_print_dir("dev");
+//			Libc::with_libc([] {
+//				auto dir1_fd = opendir("dev");
+//				if (dir1_fd == nullptr) {
+//					error("failed to open i2c File");
+//					exit(1);
+//				}
+//				struct dirent *ep;
+//				while ((ep = readdir(dir1_fd)) != nullptr)
+//					log(Cstring { ep->d_name });
+//				(void) closedir (dir1_fd);
+//			});
+
+			open_device();
+			if (_device_fd < 0) {
+				error("failed to open i2c File");
+				exit(1);
+			}
+		}
+
+		void open_device()
+		{
+			Libc::with_libc([this] {
+
+				int flags = O_WRONLY | O_CREAT;
+				mode_t mode = FREAD | FWRITE ;
+
+				_device_fd = open(_device_name, flags, mode);
+			});
+		}
+};
+
+void Libc::Component::construct(Libc::Env &env)
+{
+	static I2c_test::Main main { env };
 }
-
-
-// TODO: more tests
-//TEST(Vfs_spi, Shiftregister_small_label)
-//{
-//	static constexpr char const small_label[] = { "Hello friend!" };
-//	char buffer[sizeof(small_label)] = { "" };
-//
-//	std::fstream device { Spi::device };
-//	ASSERT_EQ(device.is_open(), true);
-//
-//	device.write(small_label, sizeof(small_label));
-//	device.read(buffer, sizeof(buffer));
-//	std::cout << small_label << std::endl;
-//	std::cout << buffer << std::endl;
-//	ASSERT_EQ(strcmp(small_label, buffer), 0);
-//
-//	device.close();
-//	ASSERT_NE(device.is_open(), true);
-//}

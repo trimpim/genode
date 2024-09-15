@@ -2,15 +2,10 @@ TARGET    = test-vfs_i2c
 
 GTEST_DIR := $(call select_from_ports,googletest)/src/lib/googletest/googletest
 
-SRC_CC   := gtest_main.cc
 SRC_CC   += tests.cc
 
-vpath gtest_main.cc $(GTEST_DIR)/src
-
 LIBS += base
-LIBS += gtest
 LIBS += libc
-LIBS += gtest_component
 LIBS += stdcxx
 LIBS += vfs
 
