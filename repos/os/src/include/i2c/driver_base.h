@@ -15,10 +15,12 @@
 #define _VFS_I2C__DRIVER_H_
 
 /* Genode includes */
+#include <base/allocator.h>
 #include <base/env.h>
 #include <base/exception.h>
 #include <util/array.h>
 #include <util/xml_node.h>
+#include <vfs/env.h>
 
 
 namespace I2c {
@@ -31,6 +33,7 @@ namespace I2c {
 	struct Transaction;
 
 	using Byte_array = Array<uint8_t, 8>;
+	using Name       = String<64>;
 
 	class Driver_creation_error : Exception { };
 
@@ -49,39 +52,11 @@ struct I2c::Bus_address {
 
 struct I2c::Settings {
 
-//	Bus_address bus_address;
-
-//	enum {
-//		STATE_HIGH = 1,
-//		STATE_LOW  = 0,
-//	};
-//
-//	enum class Mode {
-//	 	mode0 = 0, /* clk line POLARITY: 0 PHASE: 0 */
-//	 	mode1 = 1, /* clk line POLARITY: 0 PHASE: 1 */
-//	 	mode2 = 2, /* clk line POLARITY: 1 PHASE: 0 */
-//	 	mode3 = 3, /* clk line POLARITY: 1 PHASE: 1 */
-//	}
-//	Mode { Mode::mode2 };
-
-//	/*
-//	 * I2c clock idle state control. This control if the clock must
-//	 * stay HIGH or stay LOW while it is idle
-//	 */
-//	uint32_t clock_idle_state:          STATE_HIGH;
-//
-//	/*
-//	 * I2c data lines state control. This control if the clock must
-//	 * stay HIGH or stay LOW while it is idle
-//	 */
-//	uint32_t data_lines_idle_state:     STATE_HIGH;
-//
-//	/*
-//	 * I2c slave select line active state, determinate which state has to be
-//	 * considered the active state.
-//	 */
-//	uint32_t ss_line_active_state:      STATE_HIGH;
+	uint16_t         bus_speed_khz;
+	bool             verbose;
+    I2c::Name const  name;
 };
+
 
 /**
  * A message to an I2C slave is either a read or write of one or more bytes
@@ -145,7 +120,10 @@ class I2c::Driver_base : Interface
  *
  * Throws Driver_creation_error when no driver can be created.`
  */
-I2c::Driver_base &_create_driver_instance(Genode::Env &, I2c::Settings);
+I2c::Driver_base &_create_driver_instance(Genode::Env &,
+                                          Genode::Allocator &,
+                                          Vfs::Env::User &,
+                                          I2c::Settings const &);
 
 
 #endif  /* _VFS_I2C__DRIVER_H_ */

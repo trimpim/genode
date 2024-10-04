@@ -40,11 +40,13 @@ namespace {
 
 void I2c::Driver::_wait_for_irq()
 {
+warning(__func__,"()  ::  ");
 	_sem_cnt++;
 	while (_sem_cnt > 0)
 		_env.ep().wait_and_dispatch_one_io_signal();
 
 	if (_mmio.read<Mmio::Control::Master_slave_select>() == 0) {
+warning(__func__,"()  ::  ");
 		_bus_stop();
 		if (_args.verbose) {
 			error("Arbitration lost on bus ", _args.bus_no);
@@ -60,6 +62,7 @@ void I2c::Driver::_bus_busy()
 	while (!_mmio.read<Mmio::Status::Busy>()) {
 		uint64_t const current = _timer.elapsed_ms();
 		if (current - start_time > 1000) {
+warning(__func__,"()  ::  ");
 			_bus_stop();
 			if (_args.verbose) {
 				error("Timeout on bus ", _args.bus_no);
@@ -79,15 +82,18 @@ void I2c::Driver::_bus_reset()
 
 void I2c::Driver::_bus_start()
 {
+warning(__func__,"()  ::  ","   enter");
 	/* input root 90 is 25Mhz select divisor to approximate desired bus speed */
 	_mmio.write<Mmio::Freq_divider>(_bus_speed_to_divider(_args.bus_speed_khz));
 	_mmio.write<Mmio::Status>(0);
 	_mmio.write<Mmio::Control>(Mmio::Control::Enable::bits(1));
 
+Genode::log("   *************  ", Hex {  _mmio.read<Mmio::Freq_divider>() });
 	uint64_t const start_time = _timer.elapsed_ms();
 	while (!_mmio.read<Mmio::Control::Enable>()) {
 		uint64_t const current = _timer.elapsed_ms();
 		if (current - start_time > 1000) {
+warning(__func__,"()  ::  ",__LINE__);
 			_bus_stop();
 			if (_args.verbose) {
 				error("Timeout on bus ", _args.bus_no);
@@ -107,6 +113,7 @@ void I2c::Driver::_bus_start()
 	                           Mmio::Control::Enable::bits(1));
 
 	_mmio.write<Mmio::Status::Ial>(0);
+warning(__func__,"()  ::  ","   leave");
 }
 
 
@@ -118,6 +125,7 @@ void I2c::Driver::_bus_stop()
 
 void I2c::Driver::_bus_write(uint8_t data)
 {
+warning(__func__,"()  ::  ",Hex { data, Hex::Prefix::PREFIX, Hex::Pad::PAD  });
 	_mmio.write<Mmio::Data>(data);
 
 	do { _wait_for_irq(); }
@@ -126,7 +134,10 @@ void I2c::Driver::_bus_write(uint8_t data)
 	_mmio.write<Mmio::Status::Irq>(0);
 	_irq.ack();
 
-	if (_mmio.read<Mmio::Status::Rcv_ack>()) {
+auto x { _mmio.read<Mmio::Status::Rcv_ack>() };
+//	if (_mmio.read<Mmio::Status::Rcv_ack>()) {
+	if (x) {
+warning(__func__,"()  ::  ","  >>>  ",Hex { x });
 		_bus_stop();
 		if (_args.verbose) {
 			error("Slave did not acknowledge on bus ", _args.bus_no);
@@ -138,14 +149,21 @@ void I2c::Driver::_bus_write(uint8_t data)
 
 void I2c::Driver::_write(uint8_t address, I2c::Session::Message & m)
 {
+warning(__func__,"()  ::  1");
+
 	/* LSB must be 0 for writing on the bus, address is on the 7 hightest bits */
 	_bus_write(address << 1);
-	m.for_each([&] (unsigned, uint8_t & byte) { _bus_write(byte); });
+warning(__func__,"()  ::  2");
+
+	m.for_each([&] (unsigned, uint8_t &byte) {
+log("  >>>  ",Hex { byte });
+		/*_bus_write(byte);*/ });
 }
 
 
 void I2c::Driver::_read(uint8_t address, I2c::Session::Message & m)
 {
+warning(__func__,"()  ::  ");
 	/* LSB must be 1 for reading on the bus, address is on the 7 hightest bits */
 	_bus_write((uint8_t)(address << 1 | 1));
 
@@ -178,6 +196,7 @@ void I2c::Driver::_read(uint8_t address, I2c::Session::Message & m)
 
 void I2c::Driver::transmit(uint8_t address, I2c::Session::Transaction & t)
 {
+warning(__func__,"()  ::  ");
 	_bus_start();
 
 	t.for_each([&] (unsigned idx, I2c::Session::Message & m) {
