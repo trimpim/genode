@@ -15,15 +15,15 @@
 /* Genode includes */
 #include <libc/component.h>
 
+/* i2c includes */
+#include <i2c/driver_base.h>
+
 /* libc includes */
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <dirent.h>
 
-//#include <stdio.h>  // printf()
-//#include <stdlib.h> // exit()
-//#include <string.h> // strlen()
 
 namespace I2c_test {
 
@@ -33,44 +33,63 @@ namespace I2c_test {
 }
 
 
+namespace {
+
+	union Month {
+		uint8_t reg;
+		struct {
+			uint8_t ones : 4;
+			uint8_t tens : 1;
+			uint8_t gp6  : 1;
+			uint8_t gp7  : 1;
+			uint8_t gp8  : 1;
+		};
+	};
+
+	union Year {
+		uint8_t reg;
+		struct {
+			uint8_t ones : 4;
+			uint8_t tens : 4;
+		};
+	};
+
+	static inline Genode::uint8_t hundreds(unsigned value) {
+		return static_cast<Genode::uint8_t>((value / 100) % 10);
+	}
+
+	static inline Genode::uint8_t tens(unsigned value) {
+		return static_cast<Genode::uint8_t>((value / 10) % 10);
+	}
+
+	static inline Genode::uint8_t ones(unsigned value) {
+		return static_cast<Genode::uint8_t>(value % 10);
+	}
+}
+
 class I2c_test::Main
 {
 	private:
 
-		char const *_device_name = "/dev/i2c/rtc";
+		uint8_t const   MONTH_REGISTER_OFFSET  { 0x5 };
+		uint8_t const   REGISTER_OFFSET_YEAR   { 0x6 };
+
+		char    const  *_device_name           { "/dev/i2c/rtc" };
 
 		Env        &_env;
 		int         _device_fd;
 
-//		void _print_dir(char const *name, String<32> prefix_str = { })
-//		{
-//			DIR           *dp { nullptr };
-//			struct dirent *ep { nullptr };
-//
-//	log(name);
-//			Libc::with_libc([&dp, &name] {
-//				dp = opendir("dev");
-//				if (dp == nullptr) {
-//					error("failed to open directory '", name, "'");
-//					exit(1);
-//				}
-//			});
-//
-//			while ((ep = readdir(dp)) != nullptr) {
-//
-//				if (ep->d_type == DT_DIR) {
-//					log(prefix_str, "  dir  : ", Cstring { ep->d_name });
-//					_print_dir(String<128> { name, "/", Cstring { ep->d_name} }.string(),
-//					           String<32>  { prefix_str, "  "} );
-//				} else  {
-//					log(prefix_str, "  file : ", Cstring { ep->d_name });
-//				}
-//			}
-//
-//			Libc::with_libc([dp] {
-//				closedir (dp);
-//			});
-//		}
+		inline uint8_t _read_register(uint8_t offset) {
+
+			uint8_t out { 0xff };
+			Libc::with_libc([offset, &out, this] {
+
+				if (write(_device_fd, &offset, 1) == -1) { error("write error"); }
+				if (read(_device_fd, &out, 1) ==  -1)    { error("read error"); }
+			});
+
+			return out;
+		}
 
 	public:
 
@@ -78,24 +97,20 @@ class I2c_test::Main
 		:
 			_env { env }
 		{
-//			_print_dir("dev");
-//			Libc::with_libc([] {
-//				auto dir1_fd = opendir("dev");
-//				if (dir1_fd == nullptr) {
-//					error("failed to open i2c File");
-//					exit(1);
-//				}
-//				struct dirent *ep;
-//				while ((ep = readdir(dir1_fd)) != nullptr)
-//					log(Cstring { ep->d_name });
-//				(void) closedir (dir1_fd);
-//			});
-
 			open_device();
 			if (_device_fd < 0) {
 				error("failed to open i2c File");
 				exit(1);
 			}
+
+			Year  year  { _read_register(REGISTER_OFFSET_YEAR) };
+			Month month { _read_register(MONTH_REGISTER_OFFSET) };
+
+			log("  year   (reg) = ", Hex { year.reg, Hex::Prefix::PREFIX, Hex::Pad::PAD });
+			log("  year         = ", 2000u + 10u * year.tens + year.ones);
+
+			log("  month  (reg) = ", Hex { month.reg, Hex::Prefix::PREFIX, Hex::Pad::PAD });
+			log("  month        = ", 10u * month.tens + month.ones);
 		}
 
 		void open_device()

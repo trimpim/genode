@@ -20,6 +20,8 @@
 /* i2c includes */
 #include <i2c/driver_base.h>
 
+/* TODO: remove */
+#include <util/hexdump.h>
 
 namespace Vfs{
 
@@ -79,7 +81,8 @@ class Vfs::Device_file_system : public Vfs::Single_file_system
 
 			Read_result read(Byte_range_ptr const &dst, size_t &out_count) override
 			{
-log(">>>>>>> ",__func__,"()");
+log(">>>>>>> ",__func__,"()   count=",dst.num_bytes,"    out_count=",out_count);
+
 				(void)dst;
 				(void)out_count;
 				// TODO:
@@ -88,23 +91,33 @@ log(">>>>>>> ",__func__,"()");
 
 			Write_result write(Const_byte_range_ptr const &src, size_t &out_count) override
 			{
-log(">>>>>>> ",__func__,"()");
+log(">>>>>>> ",__func__,"()   count=",src.num_bytes,"    out_count=",out_count);
+//log(">>>>>>> ",Hexdump { src.start, src.num_bytes });
 
 				size_t remaining = src.num_bytes;
 				uint8_t const* current = reinterpret_cast<uint8_t const*>(src.start);
-				while (remaining > 0) {
+				try {
+					while (remaining > 0) {
+//log(">>>>>>>   while remaining = ",remaining);
 
-					uint8_t count { min(static_cast<uint8_t>(remaining), I2c::Message::MAX_LEN) };
-					I2c::Transaction trxn_read_data {
-						I2c::Message { I2c::Message::WRITE, _create_write_array(count, current) },
-						I2c::Message { I2c::Message::READ,  static_cast<uint8_t>(0x0) },
-					};
+						uint8_t count { min(static_cast<uint8_t>(remaining), I2c::Message::MAX_LEN) };
+						I2c::Transaction trxn_read_data {
+							I2c::Message { I2c::Message::WRITE, _create_write_array(count, current) },
+							I2c::Message { I2c::Message::READ,  static_cast<uint8_t>(0x0) },
+						};
 
-					_driver.transfer(_bus_addrss, trxn_read_data);
-					remaining -= count;
-					current   += count;
+log(">>>>>>>   transfer");
+						_driver.transfer(_bus_addrss, trxn_read_data);
+log(">>>>>>>   transfer");
+						remaining -= count;
+						current   += count;
+					}
+				} catch (I2c::Bus_error &) {
+					out_count = 0;
+					return Write_result::WRITE_ERR_IO ;
 				}
 				out_count = src.num_bytes;
+log(">>>>>>> OK");
 				return Write_result::WRITE_OK;
 			}
 
@@ -126,7 +139,8 @@ log(">>>>>>> ",__func__,"()");
 			                     type_name(), Node_rwx::rw(), config },
 			_env               { env },
 			_driver            { driver },
-			_bus_addrss        { .address = config.attribute_value("bus_address", static_cast<uint8_t>(0x00)) }
+			_bus_addrss        { .address = config.attribute_value("bus_address",
+			                                                       static_cast<uint8_t>(0x00)) }
 		{ }
 
 		static char const *type_name() { return "i2c"; }

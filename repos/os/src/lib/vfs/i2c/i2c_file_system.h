@@ -15,10 +15,11 @@
 #define _VFS_I2C__I2C_FILE_SYSTEM_H_
 
 /* Genode includes */
+#include <base/heap.h>
 #include <os/reporter.h>
-//#include <vfs/env.h>
-#include <vfs/dir_file_system.h>
 #include <os/vfs.h>
+#include <vfs/dir_file_system.h>
+//#include <vfs/env.h>
 
 /* i2c includes */
 #include <i2c/driver_base.h>
@@ -41,35 +42,29 @@ namespace Vfs_i2c {
 struct Vfs_i2c::Local_factory : File_system_factory, Watch_response_handler
 {
 	Vfs::Env                 &_env;
-	I2c::Settings             _settings { };
-	I2c::Driver_base         &_driver;
 	Xml_node                  _config;
-	Vfs::Device_file_system   _device { _env, _device_config(_config), _driver };
+	Heap                      _heap       { _env.env().ram(), _env.env().rm() };
+	I2c::Settings             _settings;
+	I2c::Driver_base         &_driver;
+	Vfs::Device_file_system   _device     { _env, _device_config(_config), _driver };
 
 	Xml_node _device_config(Xml_node config)
 	{
 		return config.sub_node("device");
 	}
 
-//	I2c::Settings _settings_from_config(Xml_node config) const
-//	{
-//warning(__func__);
-//warning(config);
-//warning(__func__);
-//		I2c::Settings::Bus_address bus_address { .address = config.attribute_value("bus_address", static_cast<uint8_t>(0x00)) };
-//		return I2c::Settings { .bus_address = bus_address };
-//	}
+	I2c::Settings _settings_from_config(Xml_node const &config);
 
-	Local_factory(Vfs::Env &env, Xml_node config);
+	Local_factory(Vfs::Env &env, Xml_node const &config);
 
 	Vfs::File_system *create(Vfs::Env&, Xml_node) override
 	{
 	// TODO:
-log(">>>>>>> ",__func__,"()");
-//log(node);
 
 		return &_device;
 	}
+
+	I2c::Settings const &settings() const { return _settings; }
 
 	void apply_config(Xml_node const &config);
 
@@ -83,9 +78,6 @@ class Vfs_i2c::I2c_file_system final : public Local_factory,
 	private:
 
 		using Config = String<200>;
-
-		uint16_t  _bus_speed_khz;
-		bool      _verbose;
 
 		static Config _config(Xml_node node)
 		{
@@ -121,16 +113,8 @@ class Vfs_i2c::I2c_file_system final : public Local_factory,
 		I2c_file_system(Vfs::Env &vfs_env, Genode::Xml_node node)
 		:
 			Local_factory        { vfs_env, node },
-//			Vfs::Dir_file_system { vfs_env, Xml_node { _config(node).string() }, *this },
-			Vfs::Dir_file_system { vfs_env, node, *this },
-			_bus_speed_khz       { node.attribute_value("bus_speed_khz", static_cast<uint16_t>(400)) },
-			_verbose             { node.attribute_value("verbose", false) }
-		{
-			log(_config(node));
-			warning("====================================================");
-			log(node);
-			warning("====================================================");
-		}
+			Vfs::Dir_file_system { vfs_env, node, *this }
+		{ }
 
 		void apply_config(Xml_node const &config) override
 		{

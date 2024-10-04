@@ -19,6 +19,7 @@
 #include <base/exception.h>
 #include <util/array.h>
 #include <util/xml_node.h>
+#include <vfs/env.h>
 
 
 namespace I2c {
@@ -135,7 +136,7 @@ class I2c::Driver_base : Interface
  *
  * Throws Driver_creation_error when no driver can be created.`
  */
-I2c::Driver_base &_create_driver_instance(Genode::Env &, I2c::Settings);
+I2c::Driver_base &_create_driver_instance(Genode::Env &, Vfs::Env::User &, I2c::Settings);
 
 
 #endif  /* _VFS_I2C__DRIVER_H_ */
