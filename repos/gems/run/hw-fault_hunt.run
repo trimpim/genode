@@ -1,0 +1,281 @@
+create_boot_directory
+
+if {[have_board linux] || [have_board rpi3] || [have_board imx53_qsb_tz]} {
+	puts "Run script does not support this platform."
+	exit 0
+}
+
+if {[get_cmd_switch --autopilot] && [have_board virt_qemu_riscv]} {
+	puts "Autopilot mode is not supported on this platform."
+	exit 0
+}
+
+import_from_depot [depot_user]/pkg/[drivers_nic_pkg] \
+                  [depot_user]/pkg/test-log \
+                  [depot_user]/src/[base_src] \
+                  [depot_user]/src/chroot \
+                  [depot_user]/src/curl \
+                  [depot_user]/src/depot_deploy \
+                  [depot_user]/src/depot_query \
+                  [depot_user]/src/extract \
+                  [depot_user]/src/fetchurl \
+                  [depot_user]/src/fs_rom \
+                  [depot_user]/src/init \
+                  [depot_user]/src/libarchive \
+                  [depot_user]/src/libc \
+                  [depot_user]/src/liblzma \
+                  [depot_user]/src/libssh \
+                  [depot_user]/src/nic_router \
+                  [depot_user]/src/openssl \
+                  [depot_user]/src/report_rom \
+                  [depot_user]/src/verify \
+                  [depot_user]/src/vfs \
+                  [depot_user]/src/vfs_lxip \
+                  [depot_user]/src/vfs_pipe \
+                  [depot_user]/src/zlib \
+
+set config {
+<config>
+	<parent-provides>
+		<service name="ROM"/>
+		<service name="IRQ"/>
+		<service name="IO_MEM"/>
+		<service name="IO_PORT"/>
+		<service name="PD"/>
+		<service name="RM"/>
+		<service name="CPU"/>
+		<service name="LOG"/>
+	</parent-provides>
+
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+
+	<default caps="100"/>}
+
+proc depot_user_download { user } {
+	return [exec cat [select_from_repositories sculpt/depot/$user/download]] }
+
+proc depot_user_pubkey { user } {
+	return [exec cat [select_from_repositories sculpt/depot/$user/pubkey]] }
+
+append config {
+	<start name="timer">
+		<resource name="RAM" quantum="1M"/>
+		<provides> <service name="Timer"/> </provides>
+	</start>
+
+	<start name="drivers" caps="1200" managing_system="yes">
+		<resource name="RAM" quantum="32M"/>
+		<binary name="init"/>
+		<route>
+			<service name="ROM" label="config"> <parent label="drivers.config"/> </service>
+			<service name="Timer"> <child name="timer"/> </service>
+			<service name="Uplink"> <child name="nic_router"/> </service>
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>
+
+	<start name="nic_router" caps="200">
+		<resource name="RAM" quantum="10M"/>
+		<provides>
+			<service name="Nic"/>
+			<service name="Uplink"/>
+		</provides>
+		<config verbose_domain_state="yes">
+
+			<policy label_prefix="depot_download" domain="downlink"/>
+			<policy label_prefix="drivers"        domain="uplink"/>
+
+			<domain name="uplink">
+
+				<nat domain="downlink"
+				     tcp-ports="16384"
+				     udp-ports="16384"
+				     icmp-ids="16384"/>
+
+			</domain>
+
+			<domain name="downlink" interface="10.0.3.1/24">
+
+				<dhcp-server ip_first="10.0.3.2" ip_last="10.0.3.2" dns_config_from="uplink"/>
+
+				<tcp dst="0.0.0.0/0"><permit-any domain="uplink" /></tcp>
+				<udp dst="0.0.0.0/0"><permit-any domain="uplink" /></udp>
+				<icmp dst="0.0.0.0/0" domain="uplink"/>
+
+			</domain>
+
+		</config>
+	</start>
+
+	<!--
+	<start name="vfs">
+		<resource name="RAM" quantum="20M"/>
+		<provides> <service name="File_system"/> </provides>
+		<config>
+			<vfs>
+				<dir name="depot">
+					<dir name="genodelabs">
+						<ram/>
+						<inline name="download">} [depot_user_download genodelabs] {</inline>
+						<inline name="pubkey">}   [depot_user_pubkey   genodelabs] {</inline>
+					</dir>
+				</dir>
+				<dir name="public"> <ram/> </dir>
+			</vfs>
+			<policy label="depot_download -> depot"  root="/depot"  writeable="yes"/>
+			<policy label="depot_download -> public" root="/public" writeable="yes"/>
+		</config>
+	</start>
+
+	<start name="report_rom">
+		<resource name="RAM" quantum="1M"/>
+		<provides> <service name="Report"/> <service name="ROM"/> </provides>
+		<config verbose="yes">
+		</config>
+	</start>
+
+	<start name="depot_download" caps="2000">
+		<binary name="init"/>
+		<resource name="RAM" quantum="70M"/>
+		<route>
+			<service name="ROM" label="config">
+				<parent label="depot_download.config"/> </service>
+			<service name="Report"> <child name="report_rom"/> </service>
+			<service name="Nic"> <child name="nic_router"/> </service>
+			<service name="File_system"> <child name="vfs"/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+	-->
+
+	<start name="deploy_report_rom" caps="100">
+		<binary name="report_rom"/>
+		<resource name="RAM" quantum="2M"/>
+		<provides>
+			<service name="Report"/>
+			<service name="ROM"/>
+		</provides>
+		<config verbose="no">
+			<policy label="depot_deploy -> blueprint"        report="depot_query -> blueprint"/>
+			<policy label="depot_query -> query"             report="depot_deploy -> query"/>
+			<policy label="heartbeat_monitor -> init.config" report="depot_deploy -> init.config"/>
+			<policy label="init -> config"                   report="heartbeat_monitor -> init.config"/>
+		</config>
+	</start>
+
+	<start name="depot_deploy" caps="100">
+		<resource name="RAM" quantum="4M"/>
+		<route>
+			<service name="ROM"    label="blueprint">   <child name="deploy_report_rom"/> </service>
+			<service name="ROM"    label="config">      <parent label="deploy"/> </service>
+			<service name="Report" label="init.config"> <child name="deploy_report_rom"/> </service>
+			<service name="Report" label="query">       <child name="deploy_report_rom"/> </service>
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>
+
+	<start name="vfs" caps="200">
+		<resource name="RAM" quantum="40M"/>
+		<provides>
+			<service name="File_system"/>
+		</provides>
+		<config>
+			<vfs>
+				<dir name="depot">
+					<tar name="depot.tar"/>
+				</dir>
+			</vfs>
+			<default-policy root="depot"/>
+		</config>
+	</start>
+
+	<start name="fs_rom" caps="200">
+		<resource name="RAM" quantum="40M"/>
+		<provides>
+			<service name="ROM"/>
+		</provides>
+		<config>
+			<vfs>
+				<dir name="depot">
+					<fs/>
+				</dir>
+			</vfs>
+			<default-policy root="depot"/>
+		</config>
+		<route>
+			<service name="File_system"> <child name="vfs"/> </service>
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>
+
+	<start name="depot_query" caps="100">
+		<resource name="RAM" quantum="4M"/>
+		<config query="rom">
+			<vfs>
+				<dir name="depot">
+					<fs/>
+				</dir>
+			</vfs>
+		</config>
+		<route>
+			<service name="File_system">              <child name="vfs"/> </service>
+			<service name="ROM"    label="query">     <child name="deploy_report_rom"/> </service>
+			<service name="Report" label="blueprint"> <child name="deploy_report_rom"/> </service>
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>
+
+	<start name="heartbeat_monitor" caps="100">
+		<resource name="RAM" quantum="16M"/>
+		<config/>
+		<provides>
+			<service name="Report"/>
+		</provides>
+		<route>
+			<service name="ROM"    label="init.config">  <child name="deploy_report_rom"/> </service>
+			<service name="Report">                      <child name="deploy_report_rom"/> </service>
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>
+</config>}
+
+
+set fd [open [run_dir]/genode/installation w]
+puts $fd {
+<installation arch="x86_64">
+	<archive path="genodelabs/pkg/wm/2019-03-17"/>
+	<archive path="genodelabs/bin/x86_64/backdrop/2019-03-17"/>
+	<index   path="genodelabs/index/19.02"/>
+	<index   path="genodelabs/index/19.03"/>
+</installation>}
+close $fd
+
+
+install_config $config
+
+copy_file [genode_dir]/repos/gems/recipes/raw/depot_download/depot_download.config \
+          [run_dir]/genode/depot_download.config
+
+build {
+	app/depot_download_manager
+	app/depot_query
+	server/heartbeat_monitor
+	test/leaker
+}
+
+build_boot_image [build_artifacts]
+
+append qemu_args " -nographic "
+append_qemu_nic_args
+
+
+# watch the state reports generated by the depot-download manager
+set expected_pattern {}
+append expected_pattern {.*path="genodelabs/pkg/wm/2019-03-17" state="done".*}
+append expected_pattern {.*path="genodelabs/bin/x86_64/backdrop/2019-03-17" state="done".*}
+append expected_pattern {.*path="genodelabs/index/19.02" state="done".*}
+append expected_pattern {.*path="genodelabs/index/19.03" state="failed".*}
+
+run_genode_until $expected_pattern 150
