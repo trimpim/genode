@@ -1,0 +1,68 @@
+Component that consumes state reports from `init` components and an init config
+created by a `depot_deploy` component to restart misbehaving components.
+
+Components are restarted by changing the version attribute of start nodes in the
+init configuration.
+
+The design of `heartbeat_monitor` is based on a `Report` server. This has
+compared to consuming `ROM` sessions the advantage that the label describing
+of the reporting `init` is provided for free. Also this eliminates the need
+to configure the mapping from `Report` to `ROM` sessions in a `report_rom`.
+
+The `heartbeat_monitor` can be configured to give one component of the provided
+init.config all unassigned resources. Compared to using resource saturation,
+this mechanism has the advantage that any component in that init.config can be
+restarted without running into an inconsistent state. To use this feature, you
+need to provide the label of the start node via the `remaining_resources_for`
+attribute in the `config` node:
+
+```xml
+	<start name="heartbeat_monitor">
+		<config remaining_resources_for="init -> dynamic"/>
+		...
+	</start>
+```
+
+The component creates the following reports:
+
+- free_resources (if init reports RAM and caps statistics):
+
+	This contains the information about ram/caps availability in the monitored init.
+	
+	The report looks as follows:
+	
+	```xml
+	<free_resources>
+		<ram available_mb="12M"/>
+		<caps available="123"/>
+	</free_resources>
+	```
+
+
+- restart_info
+
+	This contains information about components/slices that were restarted
+	
+	The report looks as follows:
+
+	```xml
+	<restart_info>
+		<slice name="vbox5" restarts="6">
+			<failed label="vbox5 -> vfs"
+			        caps_requests="1"
+			        cpu_faults="1"/>
+			        skipped_heartbeats="1"/>
+			        ram_requests="1"
+			        segfaults="1"/>
+			<failed label="vbox5 -> init -> log_terminal" seg_faults="1"/>
+		</slice>
+		<slice name="fs"/>
+	</restart_info>
+	```
+
+- init.state
+
+	The heartbeat_monitor re-reports the init state report from the sibling `init`.
+	In other words, the `heartbeat_monitor` writes the `init.config` for its
+	sibling `init`. The `init.state` report contains the state of that very same
+	`init`.
