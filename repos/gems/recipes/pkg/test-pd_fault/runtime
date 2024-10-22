@@ -1,0 +1,10 @@
+<runtime ram="4M" caps="200" binary="pd_fault">
+
+	<content>
+		<rom label="pd_fault"/>
+		<rom label="vfs.lib.so"/>
+	</content>
+
+	<config/>
+
+</runtime>
