@@ -48,6 +48,7 @@ create_tar_from_depot_binaries [run_dir]/genode/depot.tar \
 	[depot_user]/pkg/depot_download_runtime \
 	[depot_user]/pkg/vfs \
 	[depot_user]/pkg/test-pd_fault \
+	[depot_user]/pkg/test-log \
 	[depot_user]/pkg/cpu_burner \
 
 append config {
@@ -75,7 +76,7 @@ append config {
 	</start>
 
 	<start name="drivers" caps="1200" managing_system="yes">
-		<resource name="RAM" quantum="32M"/>
+		<resource name="RAM" quantum="64M"/>
 		<binary name="init"/>
 		<route>
 			<service name="ROM" label="config"> <parent label="drivers.config"/> </service>
@@ -212,7 +213,7 @@ append config {
 
 	<start name="fault_config" caps="100">
 		<resource name="RAM" quantum="16M"/>
-		<config arch="} [arch] {" delay_1_s="70" delay_2_s="20"/>
+		<config arch="} [arch] {" delay_1_s="1" delay_2_s="2"/>
 		<route>
 			<service name="ROM" label_last="deploy_1"> <parent/> </service>
 			<service name="ROM" label_last="deploy_2"> <parent/> </service>
@@ -305,7 +306,7 @@ append deploy_common {
 
 		<monitor_cpu_faults/>
 		<monitor_pd_faults/>
-
+		<!--
 		<start name="cpu_burner" pkg="} [depot_user] {/pkg/} [current_pkg cpu_burner] {">
 			<heartbeat/>
 			<monitor_cpu_faults/>
@@ -316,17 +317,23 @@ append deploy_common {
 			<heartbeat/>
 			<monitor_cpu_faults/>
 			<monitor_pd_faults/>
-			<config wait_time="9643">
+			<config wait_time="1643">
 				<vfs> <fs/> </vfs>
 			</config>
 		</start>
-
+		-->
 }
 
 append deploy_1_data {	<config arch="} [arch] {">
 
 		} $deploy_common {
 
+		<start name="cpu_burner-1" pkg="} [depot_user] {/pkg/} [current_pkg cpu_burner] {">
+			<heartbeat/>
+			<monitor_cpu_faults/>
+			<monitor_pd_faults/>
+		</start>
+<!--
 		<start name="vfs" pkg="} [depot_user] {/pkg/} [current_pkg vfs] {" ram="250M" caps="400">
 			<heartbeat/>
 			<config ld_verbose="no">
@@ -363,33 +370,47 @@ append deploy_1_data {	<config arch="} [arch] {">
 		</start>
 
 		<start name="pd_fault-3" pkg="} [depot_user] {/pkg/} [current_pkg test-pd_fault] {">
-			<config wait_time="3456">
+			<config wait_time="456">
 				<vfs> <fs/> </vfs>
 			</config>
 			<heartbeat/>
 			<monitor_cpu_faults/>
 			<monitor_pd_faults/>
 		</start>
-
+-->
 	</config>}
 
 append deploy_2_data {	<config arch="} [arch] {">
 
 		} $deploy_common {
 
+		<start name="test-log" pkg="} [depot_user] {/pkg/} [current_pkg test-log] {">
+			<heartbeat/>
+			<route>
+				<service name="File_system"> <child name="vfs"/> </service>
+				<service name="ROM" label_last="installation"> <parent label="installation"/> </service>
+				<any-service> <parent/> </any-service>
+			</route>
+		</start>
+<!--
 		<start name="pd_fault-2" pkg="} [depot_user] {/pkg/} [current_pkg test-pd_fault] {">
-			<config wait_time="3456">
+			<config wait_time="233">
 				<vfs> <fs/> </vfs>
 			</config>
 			<heartbeat/>
 			<monitor_cpu_faults/>
 			<monitor_pd_faults/>
 		</start>
-
+-->
 	</config>}
 
 write_deploy deploy_1 $deploy_1_data
 write_deploy deploy_2 $deploy_2_data
+
+# create simple system state ROM for imx8mp devices
+set fd [open [run_dir]/genode/system w]
+puts $fd { <system state=""/> }
+close $fd
 
 build_boot_image [list {*}[build_artifacts] deploy_1 deploy_2]
 
