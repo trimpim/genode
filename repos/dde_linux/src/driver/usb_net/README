@@ -37,6 +37,24 @@ The 'configuration' attribute allows for setting the desired configuration
 profile of the USB device in case there is more than one profile. In case it is
 omitted or 0, the driver will choose a profile (first non-vendor specific).
 
+For devices that provide one or more serial ports it is possible to provide a
+terminal session for one of them.
+
+!<start name="usb_net">
+!  <resource name="RAM" quantum="10M"/>
+!  <provides>
+!    <service name="Terminal"/>
+!  </provides>
+!  <config configuration="2" enable_uart="0"/>
+!  <route>
+!    <service name="Uplink"><child name="nic_router"/></service/>
+!    ....
+!  </route>
+!</start>
+
+With the above example the driver will announce a Terminal sessions which is used
+as the control channel. Currently only one control channel is possible.
+
 
 LTE modem configuration
 ========================
@@ -48,7 +66,7 @@ Huawai ME906s      (P/V: 12d1:15c1) - "configuration=3" for 'usb_net'
 Fibocom L830-EB-00 (P/V: 2cb7:0210) - automatically detected
 
 
-!<start name="usb_nic">
+!<start name="usb_net">
 !  <resource name="RAM" quantum="10M"/>
 !  <provides>
 !    <service name="Terminal"/>
