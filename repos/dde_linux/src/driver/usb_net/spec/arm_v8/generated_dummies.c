@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2024-07-30
+ * \date   2024-11-06
  */
 
 #include <lx_emul.h>
@@ -92,6 +92,14 @@ void __skb_get_hash(struct sk_buff * skb)
 #include <net/gso.h>
 
 struct sk_buff * __skb_gso_segment(struct sk_buff * skb,netdev_features_t features,bool tx_path)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/tty_flip.h>
+
+size_t __tty_insert_flip_string_flags(struct tty_port * port,const u8 * chars,const u8 * flags,bool mutable_flags,size_t size)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -796,6 +804,30 @@ void rtmsg_ifinfo_send(struct sk_buff * skb,struct net_device * dev,gfp_t flags,
 }
 
 
+#include <linux/seq_file.h>
+
+void seq_printf(struct seq_file * m,const char * f,...)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/seq_file.h>
+
+void seq_putc(struct seq_file * m,char c)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/seq_file.h>
+
+void seq_puts(struct seq_file * m,const char * s)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 extern void set_rq_offline(struct rq * rq);
 void set_rq_offline(struct rq * rq)
 {
@@ -855,6 +887,193 @@ struct sk_buff * tcp_get_timestamping_opt_stats(const struct sock * sk,const str
 #include <linux/clockchips.h>
 
 void tick_broadcast(const struct cpumask * mask)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+extern bool tty_buffer_cancel_work(struct tty_port * port);
+bool tty_buffer_cancel_work(struct tty_port * port)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+extern void tty_buffer_free_all(struct tty_port * port);
+void tty_buffer_free_all(struct tty_port * port)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/tty.h>
+
+void tty_driver_flush_buffer(struct tty_struct * tty)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/tty.h>
+
+const char * tty_driver_name(const struct tty_struct * tty)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/tty_flip.h>
+
+void tty_flip_buffer_push(struct tty_port * port)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/tty.h>
+
+void tty_hangup(struct tty_struct * tty)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/tty.h>
+
+int tty_hung_up_p(struct file * filp)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/tty.h>
+
+void tty_kref_put(struct tty_struct * tty)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/tty_ldisc.h>
+
+void tty_ldisc_deref(struct tty_ldisc * ld)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/tty_ldisc.h>
+
+void tty_ldisc_flush(struct tty_struct * tty)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/tty_flip.h>
+
+size_t tty_ldisc_receive_buf(struct tty_ldisc * ld,const u8 * p,const u8 * f,size_t count)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/tty_ldisc.h>
+
+struct tty_ldisc * tty_ldisc_ref(struct tty_struct * tty)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/tty.h>
+
+void tty_lock(struct tty_struct * tty)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/tty.h>
+
+const char * tty_name(const struct tty_struct * tty)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/tty.h>
+
+int tty_standard_install(struct tty_driver * driver,struct tty_struct * tty)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/tty.h>
+
+struct ktermios tty_std_termios;
+
+
+#include <linux/tty.h>
+
+speed_t tty_termios_baud_rate(const struct ktermios * termios)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/tty.h>
+
+void tty_termios_copy_hw(struct ktermios * new,const struct ktermios * old)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/tty.h>
+
+void tty_unlock(struct tty_struct * tty)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/tty_driver.h>
+
+void tty_unregister_device(struct tty_driver * driver,unsigned index)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/tty_driver.h>
+
+void tty_unregister_driver(struct tty_driver * driver)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/tty.h>
+
+void tty_vhangup(struct tty_struct * tty)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/tty.h>
+
+void tty_wait_until_sent(struct tty_struct * tty,long timeout)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/tty.h>
+
+void tty_wakeup(struct tty_struct * tty)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -922,6 +1141,94 @@ struct device_node * usb_of_get_device_node(struct usb_device * hub,int port1)
 #include <linux/usb/of.h>
 
 struct device_node * usb_of_get_interface_node(struct usb_device * udev,u8 config,u8 ifnum)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/usb/serial.h>
+
+unsigned int usb_serial_generic_chars_in_buffer(struct tty_struct * tty)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/usb/serial.h>
+
+void usb_serial_generic_close(struct usb_serial_port * port)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/usb/serial.h>
+
+int usb_serial_generic_open(struct tty_struct * tty,struct usb_serial_port * port)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/usb/serial.h>
+
+int usb_serial_generic_prepare_write_buffer(struct usb_serial_port * port,void * dest,size_t size)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/usb/serial.h>
+
+void usb_serial_generic_process_read_urb(struct urb * urb)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/usb/serial.h>
+
+void usb_serial_generic_read_bulk_callback(struct urb * urb)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/usb/serial.h>
+
+int usb_serial_generic_resume(struct usb_serial * serial)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/usb/serial.h>
+
+void usb_serial_generic_wait_until_sent(struct tty_struct * tty,long timeout)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/usb/serial.h>
+
+int usb_serial_generic_write(struct tty_struct * tty,struct usb_serial_port * port,const unsigned char * buf,int count)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/usb/serial.h>
+
+void usb_serial_generic_write_bulk_callback(struct urb * urb)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/usb/serial.h>
+
+unsigned int usb_serial_generic_write_room(struct tty_struct * tty)
 {
 	lx_emul_trace_and_stop(__func__);
 }

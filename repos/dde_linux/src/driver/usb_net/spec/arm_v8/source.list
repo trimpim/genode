@@ -91,3 +91,8 @@ net/core/xdp.c
 net/ethernet/eth.c
 net/ethtool/common.c
 net/sched/sch_generic.c
+drivers/usb/serial/option.c
+drivers/usb/serial/usb_wwan.c
+drivers/usb/serial/usb-serial.c
+drivers/usb/serial/bus.c
+drivers/tty/tty_port.c

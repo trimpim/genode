@@ -569,3 +569,74 @@ bool is_swiotlb_allocated(void)
 	return false;
 }
 #endif
+
+
+#include <linux/tty_driver.h>
+
+struct tty_driver * __tty_alloc_driver(unsigned int lines,struct module * owner,unsigned long flags)
+{
+	static struct tty_driver drv;
+
+	drv.owner = owner;
+	drv.flags = flags;
+
+	lx_emul_trace(__func__);
+	return &drv;
+}
+
+
+#include <linux/tty_driver.h>
+#include <linux/tty_port.h>
+#include <linux/usb/serial.h>
+
+
+void tty_driver_kref_put(struct tty_driver * driver)
+{
+	lx_emul_trace(__func__);
+}
+
+
+int tty_register_driver(struct tty_driver * driver)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+int usb_serial_generic_register(void)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+void tty_buffer_init(struct tty_port * port)
+{
+	lx_emul_trace(__func__);
+}
+
+
+struct device * tty_register_device_attr(struct tty_driver * driver,unsigned index,struct device * device,void * drvdata,const struct attribute_group ** attr_grp)
+{
+pr_err("   >>>   tty_register_device_attr()  (%d) --  %lx  --  %lx\n",index,(long)driver,(long)device);
+
+	lx_emul_trace(__func__);
+	return device;
+}
+
+
+#include <linux/kfifo.h>
+
+int __kfifo_alloc(struct __kfifo * fifo,unsigned int size,size_t esize,gfp_t gfp_mask)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+void __kfifo_free(struct __kfifo * fifo)
+{
+	lx_emul_trace(__func__);
+}
+
+
