@@ -62,6 +62,10 @@ SRC_CC += capability.cc
 SRC_CC += stack_area_addr.cc
 SRC_CC += heartbeat.cc
 
+ifeq ($(BOARD),)
+$(error "`BOARD` variable is not set.")
+endif
+
 CC_OPT_platform += -DBOARD_NAME="\"$(BOARD)\""
 
 # provide Genode version information
