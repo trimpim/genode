@@ -1,0 +1,26 @@
+Driver for USB Communication Device Class - Abstract Control Model devices.
+
+
+TBD
+
+
+
+!<device name="usb-3-3" class="0x2" manufacturer="Miromico" product="EDGE-GWC-02-LW-868"
+!        vendor_id="0x483" product_id="0x5740" speed="full" acquired="true">
+!
+!	<config active="true" value="0x1">
+!		<interface active="true" number="0x0" alt_setting="0x0" class="0x2" subclass="0x2" protocol="0x1">
+!			<endpoint address="0x82" attributes="0x3" max_packet_size="0x8"/>
+!		</interface>
+!
+!		<interface active="true" number="0x1" alt_setting="0x0" class="0xa" subclass="0x0" protocol="0x0">
+!			<endpoint address="0x1" attributes="0x2" max_packet_size="0x40"/>
+!			<endpoint address="0x81" attributes="0x2" max_packet_size="0x40"/>
+!		</interface>
+!	</config>
+!
+!</device>
+
+There are two sub devices
+ - interface=0x0 alt_setting=0x0 class=0x2 subclass=0x2 protocol=0x1 : CDC-ACM protocol AT
+ - interface=0x1 alt_setting=0x0 class=0xa subclass=0x0              : RS-232 over USB
