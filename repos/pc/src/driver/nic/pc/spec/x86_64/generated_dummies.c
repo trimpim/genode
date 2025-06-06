@@ -998,3 +998,87 @@ u32 xdp_master_redirect(struct xdp_buff * xdp)
 	lx_emul_trace_and_stop(__func__);
 }
 
+#include <linux/gfp.h>
+
+void __page_frag_cache_drain(struct page * page,unsigned int count)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/skbuff.h>
+
+bool __skb_flow_dissect(const struct net * net,const struct sk_buff * skb,struct flow_dissector * flow_dissector,void * target_container,const void * data,__be16 proto,int nhoff,int hlen,unsigned int flags)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/skbuff.h>
+
+u32 __skb_get_poff(const struct sk_buff * skb,const void * data,const struct flow_keys_basic * keys,int hlen)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/ethtool.h>
+
+__printf (2,3)void ethtool_sprintf(u8 ** data,const char * fmt,...)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <net/flow_dissector.h>
+
+struct flow_dissector flow_keys_basic_dissector;
+
+
+#include <linux/pci.h>
+
+bool pci_device_is_present(struct pci_dev * pdev)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/pci.h>
+
+void pcie_print_link_status(struct pci_dev * dev)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/rhashtable-types.h>
+
+int rhashtable_init(struct rhashtable * ht,const struct rhashtable_params * params)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/rhashtable.h>
+
+void * rhashtable_insert_slow(struct rhashtable * ht,const void * key,struct rhash_head * obj)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/filter.h>
+
+void xdp_do_flush(void)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/filter.h>
+
+int xdp_do_redirect(struct net_device * dev,struct xdp_buff * xdp,struct bpf_prog * xdp_prog)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+

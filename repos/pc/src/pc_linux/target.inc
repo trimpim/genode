@@ -50,6 +50,7 @@ LX_ENABLE += ATH9K_DEBUGFS
 # Ethernet NIC support
 LX_ENABLE += E1000 E1000E PCNET32
 LX_ENABLE += R8169
+LX_ENABLE += IGC
 
 # USB host-controller support (keep USB_USBNET hook)
 LX_ENABLE += USB_USBNET
