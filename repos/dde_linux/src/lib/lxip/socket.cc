@@ -33,6 +33,20 @@ struct Lx_call;
 using Socket_queue = Fifo<Lx_call>;
 
 
+struct Statics
+{
+	genode_socket_wakeup *wakeup_remote;
+};
+
+
+static Statics &statics()
+{
+	static Statics instance { };
+	return instance;
+}
+
+
+
 struct genode_socket_handle
 {
 	struct socket      *sock  { nullptr };
@@ -483,6 +497,24 @@ void genode_socket_config_address(struct genode_socket_config *config)
 }
 
 
+extern "C" unsigned int ic_myaddr;
+extern "C" unsigned int ic_netmask;
+extern "C" unsigned int ic_gateway;
+extern "C" unsigned int ic_nameservers[1];
+
+//XXX: implement link state
+bool ic_link_state = true;
+
+void genode_socket_config_info(struct genode_socket_info *info)
+{
+	if (!info) return;
+	info->ip_addr    = ic_myaddr;
+	info->netmask    = ic_netmask;
+	info->gateway    = ic_gateway;
+	info->nameserver = ic_nameservers[0];
+	info->link_state = ic_link_state;
+}
+
 void genode_socket_configure_mtu(unsigned mtu)
 {
 	genode_socket_handle handle = {
@@ -657,4 +689,10 @@ enum Errno genode_socket_release(struct genode_socket_handle *handle)
 	handle->sock = nullptr;
 	_destroy_handle(handle);
 	return release.err;
+}
+
+
+void genode_socket_register_wakeup(struct genode_socket_wakeup *remote)
+{
+	statics().wakeup_remote = remote;
 }
