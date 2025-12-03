@@ -405,6 +405,26 @@ void Block_root::announce_device(const char * name, Block::Session::Info info)
 		if (_devices[idx].constructed())
 			continue;
 
+		/*
+		 * Normally the Linux kernel anonces the `mmcblkXbootY` disks in
+		 * read only mode. On linux one changes this by with the following
+		 * command:
+		 * # echo 0 > /sys/block/mmcblkXbootY/force_ro
+		 *
+		 * Here we overwrite the writeable information from the kernel
+		 * if one of the policies that grant access to the disk specifies
+		 * `allow_boot_write = true`.
+		 * A policy that shal allow write access to such a partition need to
+		 * set both `writeable = true` and `allow_boot_write = true`.
+		 */
+		_config->for_each_sub_node("policy", [&] (Node const &policy) {
+			if (policy.attribute_value("device", String<256>{ }) == name) {
+				if (policy.attribute_value("allow_boot_write", false)) {
+					info.writeable = true;
+				}
+			}
+		});
+
 		_devices[idx].construct(name, info);
 		if (!_announced) {
 			_env.parent().announce(_env.ep().manage(*this));
