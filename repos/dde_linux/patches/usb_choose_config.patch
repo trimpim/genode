@@ -1,0 +1,18 @@
+diff --git src/linux/drivers/usb/core/generic.c src/linux/drivers/usb/core/generic.c
+index a48994e11..6f44d5cac 100644
+--- src/linux/drivers/usb/core/generic.c
++++ src/linux/drivers/usb/core/generic.c
+@@ -75,6 +75,13 @@ int usb_choose_configuration(struct usb_device *udev)
+ 			return i;
+ 	}
+ 
++	/* Genode patch: return value set by driver */
++	if (udev->actconfig) {
++		struct usb_host_config *config = udev->actconfig;
++		udev->actconfig = NULL;
++		return config->desc.bConfigurationValue;
++	}
++
+ 	best = NULL;
+ 	c = udev->config;
+ 	num_configs = udev->descriptor.bNumConfigurations;

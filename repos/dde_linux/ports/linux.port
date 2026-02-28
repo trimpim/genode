@@ -14,6 +14,7 @@ PATCH_FILES := \
                kernel_types.patch \
                lxip_checksum_32.patch \
                lxip_ip_config.patch \
+               usb_choose_config.patch \
                usb_net_cdc_ncm.patch \
                usb_net_pinephone.patch \
                usb_net_smsc95xx.patch \

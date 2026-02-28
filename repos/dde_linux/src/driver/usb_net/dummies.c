@@ -382,6 +382,15 @@ void phy_start(struct phy_device * phydev)
 }
 
 
+#include <linux/ratelimit_types.h>
+
+int ___ratelimit(struct ratelimit_state * rs,const char * func)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
 /* kernel/sched/cpudeadline.h */
 struct cpudl;
 int  cpudl_init(struct cpudl *cp)

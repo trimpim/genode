@@ -33,6 +33,7 @@ DEFINE_PER_CPU(unsigned long, cpu_scale);
 
 const struct attribute_group *usb_device_groups[] = { };
 
+unsigned lx_emul_usb_client_configuration_callback(struct usb_device *udev) { return 0; }
 void lx_emul_usb_client_device_unregister_callback(struct usb_device *udev) { }
 
 

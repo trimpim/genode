@@ -68,6 +68,16 @@ void rtmsg_ifinfo(int type, struct net_device * dev,
 }
 
 
+unsigned lx_emul_usb_client_configuration_callback(struct usb_device *udev)
+{
+	unsigned config = lx_emul_handle_config(dev_name(&udev->dev), udev->descriptor.idVendor,
+	                                        udev->descriptor.idProduct);
+	if (config > udev->descriptor.bNumConfigurations) return 0;
+
+	return config;
+}
+
+
 void lx_emul_usb_client_device_unregister_callback(struct usb_device *)
 {
 	force_uplink_destroy   = true;

@@ -122,6 +122,15 @@ static void * register_device(genode_usb_client_dev_handle_t handle,
 	udev->descriptor = *descr;
 	kfree(descr);
 
+	/* give driver the chance to choose the configuration profile */
+	int config = lx_emul_usb_client_configuration_callback(udev);
+	if (config) {
+		/* hide configuration in udev, see patch for usb_choose_config */
+		static struct usb_host_config usb_config;
+		usb_config.desc.bConfigurationValue = config;
+		udev->actconfig = &usb_config;
+	}
+
 	err = usb_new_device(udev);
 	if (err) {
 		printk("error: usb_new_device failed %d\n", err);
