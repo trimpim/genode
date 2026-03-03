@@ -1246,7 +1246,7 @@ void Session_component::set_configuration(genode_usb_device::Label label,
 		[&] (genode_usb_device & d) {
 			d.configs.apply(
 				[&] (genode_usb_configuration & c) {
-					return c.active = (c.desc.config_value == num); },
+					return c.active != (c.desc.config_value == num); },
 				[&] (genode_usb_configuration & c) {
 					c.active = (c.desc.config_value == num);
 					changed = true;
